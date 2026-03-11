@@ -21,15 +21,15 @@ namespace Model
 
 	public class User
 	{
-		public Guid UserId { get; set; }
+		public int UserId { get; set; }
 
-		public string Name { get; set; }
+		public string? Name { get; set; }
 
 		public UserRole Role { get; set; }
 
-		public string Email { get; set; }
+		public string? Email { get; set; }
 
-		public string Phone { get; set; }
+		public string? Phone { get; set; }
 
 		public UserStatus Status { get; set; }
 	}
