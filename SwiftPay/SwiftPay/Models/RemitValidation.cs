@@ -17,5 +17,7 @@ namespace SwiftPay.Models
 		public string Message { get; set; }          // required, non-empty
 		public DateTimeOffset CheckedDate { get; set; } // default GETUTCDATE()
 
+		//validations
+
 	}
 }

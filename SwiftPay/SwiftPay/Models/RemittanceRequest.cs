@@ -52,7 +52,9 @@ namespace SwiftPay.Domain.Remittance.Entities
 
 		public string? UpdatedByUserId { get; set; }
 
-		// Optimistic concurrency
-		public byte[] RowVersion { get; set; }
+		// Navigation (optional to add later)
+		// public ICollection<RemitValidation> Validations { get; set; }
+		// public ICollection<Document> Documents { get; set; }
+		//added something
 	}
 }
