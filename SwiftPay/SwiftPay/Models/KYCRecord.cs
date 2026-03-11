@@ -19,6 +19,12 @@ namespace SwiftPay.Domain.Remittance.Entities
 
         public string? Notes { get; set; }
 
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+        public bool IsDeleted { get; set; }
+
         // navigation
         public User User { get; set; }
     }

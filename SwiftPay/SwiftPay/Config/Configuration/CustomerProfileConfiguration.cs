@@ -32,6 +32,21 @@ namespace SwiftPay.Config.Configuration
                      .HasMaxLength(50)
                      .HasDefaultValue("Active");
 
+                 // CreatedAt with default current timestamp
+                 builder.Property(c => c.CreatedAt)
+                     .IsRequired()
+                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                 // UpdatedAt with default current timestamp
+                 builder.Property(c => c.UpdatedAt)
+                     .IsRequired()
+                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                 // IsDeleted with default value false
+                 builder.Property(c => c.IsDeleted)
+                     .IsRequired()
+                     .HasDefaultValue(false);
+
             builder.HasOne(c => c.User)
                    .WithMany()
                    .HasForeignKey(c => c.UserID);
@@ -90,6 +105,21 @@ namespace SwiftPay.Config.Configuration
                      .IsRequired()
                      .HasMaxLength(50)
                      .HasDefaultValue("Active");
+
+                 // CreatedAt with default current timestamp
+                 builder.Property(b => b.CreatedAt)
+                     .IsRequired()
+                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                 // UpdatedAt with default current timestamp
+                 builder.Property(b => b.UpdatedAt)
+                     .IsRequired()
+                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                 // IsDeleted with default value false
+                 builder.Property(b => b.IsDeleted)
+                     .IsRequired()
+                     .HasDefaultValue(false);
 
                  builder.HasOne(b => b.Customer)
                      .WithMany()

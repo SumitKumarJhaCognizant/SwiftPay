@@ -31,6 +31,12 @@ namespace SwiftPay.Domain.Remittance.Entities
 
         public BeneficiaryStatus Status { get; set; }
 
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+        public bool IsDeleted { get; set; }
+
         // navigation
         public CustomerProfile Customer { get; set; }
     }

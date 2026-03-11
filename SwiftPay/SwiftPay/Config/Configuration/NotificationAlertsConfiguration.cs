@@ -36,6 +36,21 @@ namespace SwiftPay.Config.Configuration
             builder.Property(n => n.CreatedDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+            // CreatedAt with default current timestamp
+            builder.Property(n => n.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // UpdatedAt with default current timestamp
+            builder.Property(n => n.UpdatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // IsDeleted with default value false
+            builder.Property(n => n.IsDeleted)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             // Foreign key to User
             builder.HasOne(n => n.User)
                 .WithMany()
