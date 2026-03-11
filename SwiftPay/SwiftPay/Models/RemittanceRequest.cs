@@ -3,6 +3,9 @@
 
 namespace SwiftPay.Domain.Remittance.Entities
 {
+	/// <summary>
+	/// Remittance request header.
+	/// </summary>
 	public class RemittanceRequest
 	{
 		public string RemitId { get; set; }
@@ -41,7 +44,8 @@ namespace SwiftPay.Domain.Remittance.Entities
 
 		public DateTimeOffset CreatedDate { get; set; }
 
-		public DateTimeOffset? UpdatedDate { get; set; }
+		public string PurposeCode { get; set; }      // required, non-empty
+		public string SourceOfFunds { get; set; }    // required, non-empty
 
 		// Audit
 		public string? CreatedByUserId { get; set; }
