@@ -31,5 +31,11 @@ namespace SwiftPay.Models
 
     
         public Status Status { get; set; } 
+
+       
+		public DateTime UpdateDate { get; set; }
+
+		public bool IsDeleted { get; set; }
+
     }
 }
