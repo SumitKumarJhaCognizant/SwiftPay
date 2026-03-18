@@ -1,9 +1,15 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SwiftPay.Configuration;
-using AutoMapper;
-using SwiftPay.Profiles;
 using SwiftPay.Mapper;
+using SwiftPay.Mapper;
+using SwiftPay.Profiles;
+using SwiftPay.Repositories;
+using SwiftPay.Repositories.Interfaces;
+using SwiftPay.Services;
+using SwiftPay.Services.Interfaces;
 using System.Text.Json.Serialization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,8 +58,16 @@ builder.Services.AddAutoMapper(typeof(RemittanceProfile),
 builder.Services.AddScoped<SwiftPay.Repositories.Interfaces.IComplianceCheckRepository, SwiftPay.Repositories.ComplianceCheckRepository>();
 builder.Services.AddScoped<SwiftPay.Services.Interfaces.IComplianceCheckService, SwiftPay.Services.ComplianceCheckService>();
 
+//Compliance Decision//
+// 1. Register the Repository
+builder.Services.AddScoped<IComplianceDecisionRepository, ComplianceDecisionRepository>();
+// 2. Register the Service
+builder.Services.AddScoped<IComplianceDecisionService, ComplianceDecisionService>();
 // AutoMapper registration - ensure AutoMapper and its extensions package versions are compatible.
 // Register mapper profiles so IMapper is available for services.
+
+
+
 builder.Services.AddAutoMapper(typeof(ConfigurationMapperProfile));
 
 

@@ -9,7 +9,10 @@ using System;
 using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.DTOs.ComplianceDTO;
 using SwiftPay.DTOs.RemittanceDTO;
+
 using System.Text.Json.Serialization;
+
+
 namespace SwiftPay.Mapper
 {
     public class ConfigurationMapperProfile : Profile
@@ -190,6 +193,24 @@ namespace SwiftPay.Mapper
                 // Ignore Audit Fields - Service layer sets these
                 .ForMember(dest => dest.CheckedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
+
+
+
+
+
+            // ===== COMPLIANCE DECISION MAPPINGS =====
+
+            // Map CreateComplianceDecisionDto -> ComplianceDecision
+            CreateMap<CreateComplianceDecisionDto, ComplianceDecision>()
+                // 1. CONVERT STRING TO ENUM (Fixes your conversion error)
+                .ForMember(dest => dest.Decision, opt => opt.MapFrom(src =>
+                    Enum.Parse<ComplianceDecisionStatus>(src.Decision, true)))
+
+                // 2. IGNORE SYSTEM FIELDS (Handled manually in Service)
+                .ForMember(dest => dest.DecisionId, opt => opt.Ignore())
+                .ForMember(dest => dest.DecisionDate, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
 
