@@ -1,46 +1,47 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SwiftPay.Domain.Remittance.Entities;
-using SwiftPay.DTOs.AmendmentDTO;
+using SwiftPay.DTOs.RefundRefDTO;
 using SwiftPay.Repositories.Interfaces;
 using SwiftPay.Services.Interfaces;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SwiftPay.Services
 {
-    public class AmendmentService : IAmendmentService
+    public class RefundRefService : IRefundRefService
     {
-        private readonly IAmendmentRepository _repo;
+        private readonly IRefundRefRepository _repo;
         private readonly IMapper _mapper;
 
-        public AmendmentService(IAmendmentRepository repo, IMapper mapper)
+        public RefundRefService(IRefundRefRepository repo, IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
         }
 
-        public async Task<Amendment> CreateAsync(CreateAmendmentDto dto)
+        public async Task<RefundRef> CreateAsync(CreateRefundRefDto dto)
         {
-            var entity = _mapper.Map<Amendment>(dto);
+            var entity = _mapper.Map<RefundRef>(dto);
             var created = await _repo.CreateAsync(entity);
             return created;
         }
 
-        public async Task<Amendment?> GetByIdAsync(int id)
+        public async Task<RefundRef?> GetByIdAsync(int id)
         {
             return await _repo.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Amendment>> GetAllAsync()
+        public async Task<IEnumerable<RefundRef>> GetAllAsync()
         {
             return await _repo.GetAllAsync();
         }
 
-        public async Task<Amendment> UpdateAsync(int id, CreateAmendmentDto dto)
+        public async Task<RefundRef> UpdateAsync(int id, CreateRefundRefDto dto)
         {
             var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) throw new Exception($"Amendment with ID {id} not found");
+            if (existing == null) throw new Exception($"RefundRef with ID {id} not found");
 
-            // Map fields from DTO onto existing entity
             _mapper.Map(dto, existing);
             existing.UpdatedDate = DateTime.UtcNow;
 

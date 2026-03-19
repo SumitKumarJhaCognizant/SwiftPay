@@ -17,6 +17,7 @@ namespace SwiftPay.Config.Configuration
             
             builder.Property(r => r.GeneratedDate).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(r => r.CreatedDate).HasDefaultValueSql("GETUTCDATE()");
+            builder.Property(r => r.UpdatedDate).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(r => r.IsDeleted).HasDefaultValue(false);
         }
     }

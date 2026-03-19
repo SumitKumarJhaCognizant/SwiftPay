@@ -1,46 +1,47 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SwiftPay.Domain.Remittance.Entities;
-using SwiftPay.DTOs.AmendmentDTO;
+using SwiftPay.DTOs.CancellationDTO;
 using SwiftPay.Repositories.Interfaces;
 using SwiftPay.Services.Interfaces;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SwiftPay.Services
 {
-    public class AmendmentService : IAmendmentService
+    public class CancellationService : ICancellationService
     {
-        private readonly IAmendmentRepository _repo;
+        private readonly ICancellationRepository _repo;
         private readonly IMapper _mapper;
 
-        public AmendmentService(IAmendmentRepository repo, IMapper mapper)
+        public CancellationService(ICancellationRepository repo, IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
         }
 
-        public async Task<Amendment> CreateAsync(CreateAmendmentDto dto)
+        public async Task<Cancellation> CreateAsync(CreateCancellationDto dto)
         {
-            var entity = _mapper.Map<Amendment>(dto);
+            var entity = _mapper.Map<Cancellation>(dto);
             var created = await _repo.CreateAsync(entity);
             return created;
         }
 
-        public async Task<Amendment?> GetByIdAsync(int id)
+        public async Task<Cancellation?> GetByIdAsync(int id)
         {
             return await _repo.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Amendment>> GetAllAsync()
+        public async Task<IEnumerable<Cancellation>> GetAllAsync()
         {
             return await _repo.GetAllAsync();
         }
 
-        public async Task<Amendment> UpdateAsync(int id, CreateAmendmentDto dto)
+        public async Task<Cancellation> UpdateAsync(int id, CreateCancellationDto dto)
         {
             var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) throw new Exception($"Amendment with ID {id} not found");
+            if (existing == null) throw new Exception($"Cancellation with ID {id} not found");
 
-            // Map fields from DTO onto existing entity
             _mapper.Map(dto, existing);
             existing.UpdatedDate = DateTime.UtcNow;
 
