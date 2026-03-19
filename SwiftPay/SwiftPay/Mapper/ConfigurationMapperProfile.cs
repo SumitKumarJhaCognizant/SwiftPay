@@ -493,8 +493,12 @@ namespace SwiftPay.Mapper
 
             // UpdateCustomerRiskRatingDto and UpdateBeneficiaryVerificationStatusDto are DTO-only,
             // no entity mapping needed - values are directly assigned in service layer
+<<<<<<< Updated upstream
 
             // RemitValidation -> RemitValidationDto
+=======
+         // RemitValidation -> RemitValidationDto
+>>>>>>> Stashed changes
             CreateMap<RemitValidation, RemitValidationDto>()
                 .ForMember(dest => dest.ValidationId, opt => opt.MapFrom(src => src.ValidationId))
                 .ForMember(dest => dest.RemitId, opt => opt.MapFrom(src => src.RemitId))

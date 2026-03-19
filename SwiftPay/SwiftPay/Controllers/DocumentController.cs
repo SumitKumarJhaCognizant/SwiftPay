@@ -8,7 +8,7 @@ using SwiftPay.DTOs.RemittanceDTO;
 namespace SwiftPay.Controllers
 {
     [ApiController]
-    [Route("api/documents")]
+    [Route("api/[controller]")]
     public class DocumentController : ControllerBase
     {
         private readonly IDocumentService _documentService;

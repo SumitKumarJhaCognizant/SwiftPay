@@ -3,6 +3,7 @@ using SwiftPay.Config.Configuration;
 using SwiftPay.Models;
 using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.Domain.Notification.Entities;
+using SwiftPay.FXModule.Api.Models;
 
 namespace SwiftPay.Configuration
 {
@@ -30,6 +31,12 @@ namespace SwiftPay.Configuration
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<KYCRecord> KYCRecords { get; set; }
         public DbSet<NotificationAlert> NotificationAlerts { get; set; }
+
+         public DbSet<FeeRule> FeeRules { get; set; }
+
+         public DbSet<FXQuote> FXQuotes { get; set; }
+
+         public DbSet<RateLock> RateLocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
