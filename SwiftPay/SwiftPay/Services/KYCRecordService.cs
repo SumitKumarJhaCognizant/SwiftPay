@@ -14,14 +14,14 @@ namespace SwiftPay.Services
     {
         private readonly IKYCRecordRepository _repo;
         private readonly IUserRepository _userRepo;
-        private readonly IAuditLogRepository _auditLogRepo;
+        private readonly IAuditLogService _auditLogService;
         private readonly IMapper _mapper;
 
-        public KYCRecordService(IKYCRecordRepository repo, IUserRepository userRepo, IAuditLogRepository auditLogRepo, IMapper mapper)
+        public KYCRecordService(IKYCRecordRepository repo, IUserRepository userRepo, IAuditLogService auditLogService, IMapper mapper)
         {
             _repo = repo;
             _userRepo = userRepo;
-            _auditLogRepo = auditLogRepo;
+            _auditLogService = auditLogService;
             _mapper = mapper;
         }
 
@@ -41,6 +41,17 @@ namespace SwiftPay.Services
             var entity = _mapper.Map<KYCRecord>(dto);
 
             var created = await _repo.CreateAsync(entity);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = created.UserID,
+                    Action = "KYC.Create",
+                    Resource = "KYCRecord",
+                    Details = $"KYC record {created.KYCID} created for user {created.UserID}."
+                });
+            }
+            catch { }
             return _mapper.Map<KYCRecordResponseDto>(created);
         }
 
@@ -72,6 +83,17 @@ namespace SwiftPay.Services
             _mapper.Map(dto, kyc);
 
             var updated = await _repo.UpdateAsync(kyc);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserID,
+                    Action = "KYC.Update",
+                    Resource = "KYCRecord",
+                    Details = $"KYC record {updated.KYCID} updated for user {updated.UserID}."
+                });
+            }
+            catch { }
             return _mapper.Map<KYCRecordResponseDto>(updated);
         }
 
@@ -88,6 +110,17 @@ namespace SwiftPay.Services
 
             // VerifiedDate and UpdatedAt are handled by AuditLogInterceptor automatically
             var updated = await _repo.UpdateAsync(kyc);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserID,
+                    Action = "KYC.UpdateStatus",
+                    Resource = "KYCRecord",
+                    Details = $"KYC record {updated.KYCID} status set to {updated.VerificationStatus}."
+                });
+            }
+            catch { }
             return _mapper.Map<KYCRecordResponseDto>(updated);
         }
 
@@ -100,6 +133,17 @@ namespace SwiftPay.Services
             kyc.VerificationStatus = KycVerificationStatus.Verified;
             // VerifiedDate and UpdatedAt are handled by AuditLogInterceptor automatically
             var updated = await _repo.UpdateAsync(kyc);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserID,
+                    Action = "KYC.MarkVerified",
+                    Resource = "KYCRecord",
+                    Details = $"KYC record {updated.KYCID} marked verified for user {updated.UserID}."
+                });
+            }
+            catch { }
 
             return _mapper.Map<KYCRecordResponseDto>(updated);
         }
@@ -131,7 +175,22 @@ namespace SwiftPay.Services
 
         public async Task<bool> DeleteAsync(int kycId)
         {
-            return await _repo.DeleteAsync(kycId);
+            var result = await _repo.DeleteAsync(kycId);
+            if (result)
+            {
+                try
+                {
+                    await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                    {
+                        UserID = kycId,
+                        Action = "KYC.Delete",
+                        Resource = "KYCRecord",
+                        Details = $"KYC record {kycId} deleted."
+                    });
+                }
+                catch { }
+            }
+            return result;
         }
     }
 }

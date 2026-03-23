@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -208,6 +209,7 @@ namespace SwiftPay.Controllers
         /// <response code="404">KYC record not found</response>
         /// <response code="500">Server error</response>
         [HttpPatch("{kycId}/status")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(KYCRecordResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -237,6 +239,7 @@ namespace SwiftPay.Controllers
         /// <response code="404">KYC record not found</response>
         /// <response code="500">Server error</response>
         [HttpPut("{kycId}/verify")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(KYCRecordResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -16,12 +16,14 @@ namespace SwiftPay.Services
         private readonly ICustomerRepository _repo;
         private readonly IUserRepository _userRepo;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public CustomerService(ICustomerRepository repo, IUserRepository userRepo, IMapper mapper)
+        public CustomerService(ICustomerRepository repo, IUserRepository userRepo, IMapper mapper, IAuditLogService auditLogService)
         {
             _repo = repo;
             _userRepo = userRepo;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<CustomerResponseDto> CreateAsync(CreateCustomerDto dto)
@@ -40,6 +42,17 @@ namespace SwiftPay.Services
             var entity = _mapper.Map<CustomerProfile>(dto);
 
             var created = await _repo.CreateAsync(entity);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = created.UserID,
+                    Action = "Customer.Create",
+                    Resource = "Customer",
+                    Details = $"Customer {created.CustomerID} created for user {created.UserID}."
+                });
+            }
+            catch { }
             return _mapper.Map<CustomerResponseDto>(created);
         }
 
@@ -71,6 +84,17 @@ namespace SwiftPay.Services
             _mapper.Map(dto, customer);
 
             var updated = await _repo.UpdateAsync(customer);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserID,
+                    Action = "Customer.Update",
+                    Resource = "Customer",
+                    Details = $"Customer {updated.CustomerID} updated for user {updated.UserID}."
+                });
+            }
+            catch { }
             return _mapper.Map<CustomerResponseDto>(updated);
         }
 
@@ -84,12 +108,38 @@ namespace SwiftPay.Services
             customer.RiskRating = dto.RiskRating;
 
             var updated = await _repo.UpdateAsync(customer);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserID,
+                    Action = "Customer.UpdateRiskRating",
+                    Resource = "Customer",
+                    Details = $"Customer {updated.CustomerID} risk rating set to {updated.RiskRating}."
+                });
+            }
+            catch { }
             return _mapper.Map<CustomerResponseDto>(updated);
         }
 
         public async Task<bool> DeleteAsync(int customerId)
         {
-            return await _repo.DeleteAsync(customerId);
+            var result = await _repo.DeleteAsync(customerId);
+            if (result)
+            {
+                try
+                {
+                    await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                    {
+                        UserID = customerId,
+                        Action = "Customer.Delete",
+                        Resource = "Customer",
+                        Details = $"Customer {customerId} deleted."
+                    });
+                }
+                catch { }
+            }
+            return result;
         }
     }
 }

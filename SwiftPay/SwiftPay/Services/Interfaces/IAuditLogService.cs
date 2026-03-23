@@ -25,6 +25,9 @@ namespace SwiftPay.Services.Interfaces
             int pageSize = 20);
         
         Task<bool> DeleteAsync(int auditId);
+        
+        // Allow services to emit audit logs when write operations occur
+        Task<GetAuditLogDto> CreateAsync(CreateAuditLogDto dto);
     }
 }
 

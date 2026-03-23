@@ -31,6 +31,13 @@ namespace SwiftPay.Repositories
                 .FirstOrDefaultAsync(r => r.RoleId == roleId && !r.IsDeleted);
         }
 
+        public async Task<Role> GetByRoleTypeAsync(SwiftPay.Constants.Enums.RoleType roleType)
+        {
+            return await _db.Set<Role>()
+                .Include(r => r.UserRoles)
+                .FirstOrDefaultAsync(r => r.RoleType == roleType && !r.IsDeleted);
+        }
+
         public async Task<IEnumerable<Role>> GetAllAsync()
         {
             return await _db.Set<Role>()

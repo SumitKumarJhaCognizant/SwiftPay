@@ -75,5 +75,13 @@ namespace SwiftPay.Services
         {
             return await _repo.DeleteAsync(auditId);
         }
+
+        public async Task<GetAuditLogDto> CreateAsync(CreateAuditLogDto dto)
+        {
+            var entity = _mapper.Map<Domain.Remittance.Entities.AuditLog>(dto);
+            entity.Timestamp = dto.Timestamp;
+            var created = await _repo.CreateAsync(entity);
+            return _mapper.Map<GetAuditLogDto>(created);
+        }
     }
 }

@@ -15,12 +15,14 @@ namespace SwiftPay.Services
         private readonly IBeneficiaryRepository _repo;
         private readonly ICustomerRepository _customerRepo;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public BeneficiaryService(IBeneficiaryRepository repo, ICustomerRepository customerRepo, IMapper mapper)
+        public BeneficiaryService(IBeneficiaryRepository repo, ICustomerRepository customerRepo, IMapper mapper, IAuditLogService auditLogService)
         {
             _repo = repo;
             _customerRepo = customerRepo;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<BeneficiaryResponseDto> CreateAsync(CreateBeneficiaryDto dto)
@@ -34,6 +36,17 @@ namespace SwiftPay.Services
             var entity = _mapper.Map<Beneficiary>(dto);
 
             var created = await _repo.CreateAsync(entity);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = created.CustomerID,
+                    Action = "Beneficiary.Create",
+                    Resource = "Beneficiary",
+                    Details = $"Beneficiary {created.BeneficiaryID} created for customer {created.CustomerID}."
+                });
+            }
+            catch { }
             return _mapper.Map<BeneficiaryResponseDto>(created);
         }
 
@@ -65,6 +78,17 @@ namespace SwiftPay.Services
             _mapper.Map(dto, beneficiary);
 
             var updated = await _repo.UpdateAsync(beneficiary);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.CustomerID,
+                    Action = "Beneficiary.Update",
+                    Resource = "Beneficiary",
+                    Details = $"Beneficiary {updated.BeneficiaryID} updated for customer {updated.CustomerID}."
+                });
+            }
+            catch { }
             return _mapper.Map<BeneficiaryResponseDto>(updated);
         }
 
@@ -78,12 +102,38 @@ namespace SwiftPay.Services
             beneficiary.VerificationStatus = dto.VerificationStatus;
 
             var updated = await _repo.UpdateAsync(beneficiary);
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.CustomerID,
+                    Action = "Beneficiary.UpdateVerification",
+                    Resource = "Beneficiary",
+                    Details = $"Beneficiary {updated.BeneficiaryID} verification changed to {updated.VerificationStatus}."
+                });
+            }
+            catch { }
             return _mapper.Map<BeneficiaryResponseDto>(updated);
         }
 
         public async Task<bool> DeleteAsync(int beneficiaryId)
         {
-            return await _repo.DeleteAsync(beneficiaryId);
+            var result = await _repo.DeleteAsync(beneficiaryId);
+            if (result)
+            {
+                try
+                {
+                    await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                    {
+                        UserID = beneficiaryId,
+                        Action = "Beneficiary.Delete",
+                        Resource = "Beneficiary",
+                        Details = $"Beneficiary {beneficiaryId} deleted."
+                    });
+                }
+                catch { }
+            }
+            return result;
         }
     }
 }

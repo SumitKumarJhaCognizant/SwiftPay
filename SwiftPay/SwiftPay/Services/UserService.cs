@@ -14,11 +14,13 @@ namespace SwiftPay.Services
     {
         private readonly IUserRepository _repo;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public UserService(IUserRepository repo, IMapper mapper)
+        public UserService(IUserRepository repo, IMapper mapper, IAuditLogService auditLogService)
         {
             _repo = repo;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<UserResponseDto> CreateAsync(CreateUserDto dto)
@@ -31,7 +33,27 @@ namespace SwiftPay.Services
             // Use AutoMapper to map DTO to entity
             var entity = _mapper.Map<User>(dto);
 
+            // Hash password before persisting
+            if (!string.IsNullOrEmpty(dto.Password))
+            {
+                // Use BCrypt Enhanced hashing on a background thread to avoid blocking
+                entity.PasswordHash = await Task.Run(() => BCrypt.Net.BCrypt.EnhancedHashPassword(dto.Password));
+                entity.Password = null; // clear plain password
+            }
+
             var created = await _repo.CreateAsync(entity);
+            // Emit audit log for create
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = created.UserId,
+                    Action = "User.Create",
+                    Resource = "User",
+                    Details = $"User {created.Email} created."
+                });
+            }
+            catch { }
             return _mapper.Map<UserResponseDto>(created);
         }
 
@@ -79,12 +101,39 @@ namespace SwiftPay.Services
             _mapper.Map(dto, user);
 
             var updated = await _repo.UpdateAsync(user);
+            // Emit audit log for update
+            try
+            {
+                await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                {
+                    UserID = updated.UserId,
+                    Action = "User.Update",
+                    Resource = "User",
+                    Details = $"User {updated.Email} updated."
+                });
+            }
+            catch { }
             return _mapper.Map<UserResponseDto>(updated);
         }
 
         public async Task<bool> DeleteAsync(int userId)
         {
-            return await _repo.DeleteAsync(userId);
+            var result = await _repo.DeleteAsync(userId);
+            if (result)
+            {
+                try
+                {
+                    await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+                    {
+                        UserID = userId,
+                        Action = "User.Delete",
+                        Resource = "User",
+                        Details = $"User {userId} deleted."
+                    });
+                }
+                catch { }
+            }
+            return result;
         }
     }
 }

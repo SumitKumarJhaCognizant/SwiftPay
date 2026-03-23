@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260317061130_FinalizeSwiftPayModels")]
-    partial class FinalizeSwiftPayModels
+    [Migration("20260320200124_SwiftPayDb")]
+    partial class SwiftPayDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -128,7 +128,9 @@ namespace SwiftPay.Migrations
                         .HasDefaultValue("Pending");
 
                     b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("AmendmentID");
 
@@ -178,7 +180,11 @@ namespace SwiftPay.Migrations
 
                     b.HasKey("AuditID");
 
+                    b.HasIndex("Resource");
+
                     b.HasIndex("UserID");
+
+                    b.HasIndex("Timestamp", "UserID");
 
                     b.ToTable("AuditLogs");
                 });
@@ -311,7 +317,9 @@ namespace SwiftPay.Migrations
                         .HasDefaultValue("Requested");
 
                     b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("CancellationID");
 
@@ -657,7 +665,9 @@ namespace SwiftPay.Migrations
                         .HasDefaultValue("Initiated");
 
                     b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("RefundID");
 
@@ -1305,6 +1315,9 @@ namespace SwiftPay.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()

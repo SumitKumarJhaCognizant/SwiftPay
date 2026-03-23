@@ -7,10 +7,10 @@ namespace SwiftPay.Services.Interfaces
 {
     public interface IUserRoleService
     {
-        Task<UserRole> AssignRoleToUserAsync(int userId, CreateUserRoleRequestDto dto);
-        Task<UserRole> GetByIdAsync(int userRoleId);
-        Task<IEnumerable<UserRole>> GetByUserIdAsync(int userId);
-        Task<IEnumerable<UserRole>> GetByRoleIdAsync(int roleId);
+        Task<UserRoleResponseDto> AssignRoleToUserAsync(int userId, CreateUserRoleRequestDto dto);
+        Task<UserRoleResponseDto> GetByIdAsync(int userRoleId);
+        Task<IEnumerable<UserRoleResponseDto>> GetByUserIdAsync(int userId);
+        Task<IEnumerable<UserRoleResponseDto>> GetByRoleIdAsync(int roleId);
         Task<bool> RemoveRoleFromUserAsync(int userRoleId);
     }
 }

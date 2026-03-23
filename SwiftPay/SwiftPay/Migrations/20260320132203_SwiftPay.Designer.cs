@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260317102106_MigrationName")]
-    partial class MigrationName
+    [Migration("20260320132203_SwiftPay")]
+    partial class SwiftPay
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -180,7 +180,11 @@ namespace SwiftPay.Migrations
 
                     b.HasKey("AuditID");
 
+                    b.HasIndex("Resource");
+
                     b.HasIndex("UserID");
+
+                    b.HasIndex("Timestamp", "UserID");
 
                     b.ToTable("AuditLogs");
                 });
@@ -1311,6 +1315,9 @@ namespace SwiftPay.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()

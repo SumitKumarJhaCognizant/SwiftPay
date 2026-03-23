@@ -12,12 +12,14 @@ namespace SwiftPay.Services
 		private readonly INotificationAlertRepository _repo;
 		private readonly IUserRepository _userRepo;
 		private readonly IMapper _mapper;
+		private readonly IAuditLogService _auditLogService;
 
-		public NotificationAlertService(INotificationAlertRepository repo, IUserRepository userRepo, IMapper mapper)
+		public NotificationAlertService(INotificationAlertRepository repo, IUserRepository userRepo, IMapper mapper, IAuditLogService auditLogService)
 		{
 			_repo = repo;
 			_userRepo = userRepo;
 			_mapper = mapper;
+			_auditLogService = auditLogService;
 		}
 
 	public async Task<NotificationResponseDto> CreateAsync(CreateNotificationDto dto)
@@ -31,6 +33,17 @@ namespace SwiftPay.Services
 		var entity = _mapper.Map<NotificationAlert>(dto);
 
 		var created = await _repo.CreateAsync(entity);
+		try
+		{
+			await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+			{
+				UserID = created.UserID,
+				Action = "Notification.Create",
+				Resource = "Notification",
+				Details = $"Notification {created.NotificationID} created for user {created.UserID}."
+			});
+		}
+		catch { }
 		return _mapper.Map<NotificationResponseDto>(created);
 	}
 
@@ -69,6 +82,17 @@ namespace SwiftPay.Services
 		notification.Status = NotificationStatus.Read;
 
 		var updated = await _repo.UpdateAsync(notification);
+		try
+		{
+			await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+			{
+				UserID = updated.UserID,
+				Action = "Notification.MarkAsRead",
+				Resource = "Notification",
+				Details = $"Notification {updated.NotificationID} marked as read for user {updated.UserID}."
+			});
+		}
+		catch { }
 		return _mapper.Map<NotificationResponseDto>(updated);
 	}
 
@@ -81,8 +105,18 @@ namespace SwiftPay.Services
 		foreach (var notification in notifications)
 		{
 			notification.Status = NotificationStatus.Read;
-			// ReadAt and UpdatedAt are handled by AuditLogInterceptor automatically
 			await _repo.UpdateAsync(notification);
+			try
+			{
+				await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+				{
+					UserID = notification.UserID,
+					Action = "Notification.MarkAsRead",
+					Resource = "Notification",
+					Details = $"Notification {notification.NotificationID} marked as read for user {notification.UserID}."
+				});
+			}
+			catch { }
 		}
 
 		return _mapper.Map<List<NotificationResponseDto>>(notifications);
@@ -90,7 +124,23 @@ namespace SwiftPay.Services
 
 		public async Task<bool> DeleteAsync(int notificationId)
 		{
-			return await _repo.DeleteAsync(notificationId);
+			var notification = await _repo.GetByIdAsync(notificationId);
+			var result = await _repo.DeleteAsync(notificationId);
+			if (result)
+			{
+				try
+				{
+					await _auditLogService.CreateAsync(new DTOs.UserCustomerDTO.CreateAuditLogDto
+					{
+						UserID = notification?.UserID ?? 0,
+						Action = "Notification.Delete",
+						Resource = "Notification",
+						Details = $"Notification {notificationId} deleted."
+					});
+				}
+				catch { }
+			}
+			return result;
 		}
 	}
 }
