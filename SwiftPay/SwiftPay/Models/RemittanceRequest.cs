@@ -12,7 +12,8 @@ namespace SwiftPay.Domain.Remittance.Entities
 	/// </summary>
 	public class RemittanceRequest
 	{
-        public string RemitId { get; set; }
+        // Primary key integer RemitId (was string GUID previously)
+        public int RemitId { get; set; }
 
 		// Foreign references (by ID only for Phase-1)
 		public int CustomerId { get; set; }

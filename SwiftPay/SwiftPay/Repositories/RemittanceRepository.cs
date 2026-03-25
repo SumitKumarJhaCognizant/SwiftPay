@@ -20,6 +20,28 @@ namespace SwiftPay.Repositories
 		}
 
 		/// <summary>
+		/// Retrieves remittances for a given customer with pagination.
+		/// </summary>
+		public async Task<List<RemittanceRequest>> GetByCustomerIdAsync(int customerId, int page, int limit, string? status = null)
+		{
+			if (page <= 0) page = 1;
+			if (limit <= 0) limit = 10;
+
+			var query = _db.Set<RemittanceRequest>().Where(r => r.CustomerId == customerId && !r.IsDeleted);
+
+			if (!string.IsNullOrWhiteSpace(status))
+			{
+				// status stored as string in DB via conversion usually, compare enum names
+				query = query.Where(r => r.Status.ToString() == status);
+			}
+
+			return await query.OrderByDescending(r => r.CreatedDate)
+				.Skip((page - 1) * limit)
+				.Take(limit)
+				.ToListAsync();
+		}
+
+		/// <summary>
 		/// Creates a new remittance request and saves it to the database.
 		/// </summary>
 		public async Task<RemittanceRequest> CreateAsync(RemittanceRequest entity)
@@ -37,15 +59,12 @@ namespace SwiftPay.Repositories
 		/// Retrieves a remittance request by its RemitId (string).
 		/// Includes related documents and validations.
 		/// </summary>
-		public async Task<RemittanceRequest?> GetByIdAsync(string remitId)
+        public async Task<RemittanceRequest?> GetByIdAsync(int remitId)
 		{
-			if (string.IsNullOrWhiteSpace(remitId))
-				return null;
-
-			return await _db.Set<RemittanceRequest>()
-				.Include(r => r.Documents)
-				.Include(r => r.Validations)
-				.FirstOrDefaultAsync(r => r.RemitId == remitId);
+            return await _db.Set<RemittanceRequest>()
+                .Include(r => r.Documents)
+                .Include(r => r.Validations)
+                .FirstOrDefaultAsync(r => r.RemitId == remitId && !r.IsDeleted);
 		}
 
 		/// <summary>
@@ -75,18 +94,23 @@ namespace SwiftPay.Repositories
 				throw new InvalidOperationException("Validation insert failed.");
 		}
 
-		/// <summary>
-		/// Retrieves all validation records for a remittance.
-		/// </summary>
-		public async Task<List<RemitValidation>> GetValidationsByRemitIdAsync(string remitId)
-		{
-			if (string.IsNullOrWhiteSpace(remitId))
-				return new List<RemitValidation>();
+        /// <summary>
+        /// Retrieves all validation records for a remittance.
+        /// </summary>
+        public async Task<List<RemitValidation>> GetValidationsByRemitIdAsync(int remitId)
+        {
+            return await _db.Set<RemitValidation>()
+                .Where(v => v.RemitId == remitId)
+                .OrderBy(v => v.CheckedDate)
+                .ToListAsync();
+        }
 
-			return await _db.Set<RemitValidation>()
-				.Where(v => v.RemitId == remitId)
-				.OrderBy(v => v.CheckedDate)
-				.ToListAsync();
-		}
+        /// <summary>
+        /// Retrieves all remittance requests.
+        /// </summary>
+        public async Task<IEnumerable<RemittanceRequest>> GetAllAsync()
+        {
+            return await _db.Set<RemittanceRequest>().ToListAsync();
+        }
 	}
 }

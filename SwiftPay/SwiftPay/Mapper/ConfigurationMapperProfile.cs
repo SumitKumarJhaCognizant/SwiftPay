@@ -101,7 +101,7 @@ namespace SwiftPay.Mapper
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.FromCurrency, opt => opt.MapFrom(src => src.FromCurrency))
                 .ForMember(dest => dest.ToCurrency, opt => opt.MapFrom(src => src.ToCurrency))
-                .ForMember(dest => dest.SendAmount, opt => opt.MapFrom(src => src.SendAmount))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.SendAmount))
                 .ForMember(dest => dest.ReceiverAmount, opt => opt.MapFrom(src => src.ReceiverAmount))
                 .ForMember(dest => dest.RateApplied, opt => opt.MapFrom(src => src.RateApplied))
                 .ForMember(dest => dest.FeeApplied, opt => opt.MapFrom(src => src.FeeApplied))

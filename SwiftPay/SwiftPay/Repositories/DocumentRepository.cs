@@ -29,9 +29,14 @@ namespace SwiftPay.Repositories
             return await _db.Set<Document>().FindAsync(documentId);
         }
 
-        public async Task<List<Document>> GetByRemitIdAsync(string remitId)
+        public async Task<List<Document>> GetByRemitIdAsync(int remitId)
         {
             return await _db.Set<Document>().Where(d => d.RemitId == remitId && !d.IsDeleted).ToListAsync();
+        }
+
+        public async Task<List<Document>> GetAllAsync()
+        {
+            return await _db.Set<Document>().Where(d => !d.IsDeleted).ToListAsync();
         }
 
         public async Task UpdateAsync(Document doc)
@@ -50,6 +55,7 @@ namespace SwiftPay.Repositories
             entity.UpdateDate = System.DateTime.UtcNow;
             _db.Set<Document>().Update(entity);
             await _db.SaveChangesAsync();
+
         }
     }
 }

@@ -8,7 +8,8 @@ namespace SwiftPay.Repositories.Interfaces
     {
         Task<Document> CreateAsync(Document doc);
         Task<Document?> GetByIdAsync(int documentId);
-        Task<List<Document>> GetByRemitIdAsync(string remitId);
+        Task<List<Document>> GetByRemitIdAsync(int remitId);
+        Task<List<Document>> GetAllAsync();
         Task UpdateAsync(Document doc);
         Task DeleteAsync(int documentId);
     }

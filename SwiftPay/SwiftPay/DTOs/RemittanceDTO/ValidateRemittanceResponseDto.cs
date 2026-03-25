@@ -3,8 +3,8 @@
     public class ValidateRemittanceResponseDto
     {
 
-        // RemitId is a string GUID in the domain model
-        public string RemitId { get; set; } = default!;
+        // RemitId is an integer in the domain model
+        public int RemitId { get; set; }
 
 
 		/// <summary>

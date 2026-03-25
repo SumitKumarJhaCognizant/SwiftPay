@@ -19,6 +19,31 @@ namespace SwiftPay.Controllers
         }
 
         /// <summary>
+        /// Get paginated remittances for a customer
+        /// </summary>
+        [HttpGet("{customerId}/remittances")]
+        [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetRemittances(int customerId, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int limit = 10)
+        {
+            try
+            {
+                // resolve remittance service from DI via controller's service provider? Use ICustomerService to fetch via remittance service not available here.
+                // For simplicity, create a new scope and resolve IRemittanceService.
+                var remittanceService = HttpContext.RequestServices.GetService(typeof(SwiftPay.Services.Interfaces.IRemittanceService)) as SwiftPay.Services.Interfaces.IRemittanceService;
+                if (remittanceService == null) return StatusCode(500, new { message = "Remittance service not available." });
+
+                var list = await remittanceService.GetByCustomerRemittancesAsync(customerId, page, limit, status);
+                return Ok(new { message = "Remittances retrieved successfully.", data = list });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving remittances.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Create a new customer profile
         /// </summary>
         /// <param name="dto">Customer creation data</param>

@@ -5,11 +5,12 @@ namespace SwiftPay.DTOs.RemittanceDTO
     public class DocumentResponseDto
     {
         public int DocumentId { get; set; }
-        public string RemitId { get; set; } = default!;
-        public string DocType { get; set; } = default!;
-        public string FileURI { get; set; } = default!;
-        public string VerificationStatus { get; set; } = default!;
+        public int RemitId { get; set; }
+        public string DocType { get; set; } = string.Empty;
+        public string FileURI { get; set; } = string.Empty;
+        public string VerificationStatus { get; set; } = string.Empty;
         public DateTimeOffset UploadedDate { get; set; }
         public DateTime CreatedDate { get; set; }
+        public bool IsDeleted { get; set; } // Added property
     }
 }

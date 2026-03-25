@@ -8,24 +8,34 @@ namespace SwiftPay.Services.Interfaces
         Task<CreateRemittanceResponseDto> CreateAsync(CreateRemittanceDto dto);
 
         // Get by string RemitId (GUID stored as string)
-        Task<CreateRemittanceResponseDto?> GetByIdAsync(string remitId);
+        Task<CreateRemittanceResponseDto?> GetByIdAsync(int remitId);
+
 
 
         // Remit validation functions
-		Task<ValidateRemittanceResponseDto> ValidateAsync(string remitId);
+        Task<ValidateRemittanceResponseDto> ValidateAsync(int remitId);
 
-		Task<List<RemitValidationDto>> GetValidationsAsync(string remitId);
+		Task<List<RemitValidationDto>> GetValidationsAsync(int remitId);
 
         // Update and delete remittance
-        Task UpdateAsync(string remitId, CreateRemittanceDto dto);
-        Task<bool> DeleteAsync(string remitId);
+        Task UpdateAsync(int remitId, UpdateRemittanceDto dto); // Updated to use UpdateRemittanceDto
+        Task SoftDeleteAsync(int remitId); // Added SoftDeleteAsync method
+
+        // Additional operations
+        // Use integer remittance identifier throughout service methods
+        Task<string> CancelAsync(int remitId, string cancellationReason);
+
+        Task<List<CreateRemittanceResponseDto>> GetByCustomerRemittancesAsync(int customerId, int page, int limit, string? status = null);
+
+        Task MarkPendingComplianceAsync(int remitId);
 
         // Update and delete individual validation records
         Task UpdateValidationAsync(RemitValidationDto dto);
         Task DeleteValidationAsync(Guid validationId);
 
         //Document functions 
-
-
+        Task<IEnumerable<CreateRemittanceResponseDto>> GetAllAsync(); // Added method
+        Task<IEnumerable<RemitValidationDto>> GetValidationsByRemitIdAsync(int remitId); // Added method
+        Task<RemitValidationDto> GetValidationByIdAsync(Guid validationId); // Added method
 	}
 }

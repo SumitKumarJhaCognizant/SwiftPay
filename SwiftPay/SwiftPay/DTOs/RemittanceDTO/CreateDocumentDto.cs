@@ -5,8 +5,7 @@ namespace SwiftPay.DTOs.RemittanceDTO
     public class CreateDocumentDto
     {
         [Required]
-        [StringLength(64, MinimumLength = 36)]
-        public string RemitId { get; set; } 
+        public int RemitId { get; set; }
 
         [Required]
         public int DocType { get; set; }

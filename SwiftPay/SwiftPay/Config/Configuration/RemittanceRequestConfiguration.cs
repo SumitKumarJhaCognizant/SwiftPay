@@ -20,7 +20,6 @@ namespace SwiftPay.Config.Configuration
             builder.Property(r => r.RemitId)
                 .IsRequired()
                 .HasMaxLength(64)
-                .HasDefaultValueSql("NEWID()")
                 .ValueGeneratedOnAdd();
 
 			builder.Property(r => r.FromCurrency).IsRequired().HasMaxLength(3).IsFixedLength().IsUnicode(false);

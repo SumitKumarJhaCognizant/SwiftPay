@@ -715,11 +715,12 @@ namespace SwiftPay.Migrations
 
             modelBuilder.Entity("SwiftPay.Domain.Remittance.Entities.RemittanceRequest", b =>
                 {
-                    b.Property<string>("RemitId")
+                    b.Property<int>("RemitId")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RemitId"));
 
                     b.Property<int>("BeneficiaryId")
                         .HasColumnType("int");
@@ -1058,10 +1059,9 @@ namespace SwiftPay.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("RemitId")
-                        .IsRequired()
+                    b.Property<int>("RemitId")
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdateDate")
                         .ValueGeneratedOnAdd()
@@ -1166,10 +1166,9 @@ namespace SwiftPay.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("RemitId")
-                        .IsRequired()
+                    b.Property<int>("RemitId")
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("int");
 
                     b.Property<int>("Result")
                         .HasColumnType("int");

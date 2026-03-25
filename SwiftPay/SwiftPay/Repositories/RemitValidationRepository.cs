@@ -45,7 +45,7 @@ namespace SwiftPay.Repositories
             return true;
         }
 
-        public async Task<List<RemitValidation>> GetByRemitIdAsync(string remitId)
+        public async Task<List<RemitValidation>> GetByRemitIdAsync(int remitId)
         {
             return await _db.Set<RemitValidation>()
                 .Where(v => v.RemitId == remitId)

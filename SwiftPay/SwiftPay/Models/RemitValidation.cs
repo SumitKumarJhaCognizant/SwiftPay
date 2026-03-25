@@ -10,7 +10,7 @@ namespace SwiftPay.Models
 
 		public Guid ValidationId { get; set; }       // PK
 
-        public string RemitId { get; set; }            // FK -> RemittanceRequest (string GUID)
+        public int RemitId { get; set; }            // FK -> RemittanceRequest (int)
 
         [ForeignKey("RemitId")]
         [System.ComponentModel.DataAnnotations.Schema.InverseProperty("Validations")]

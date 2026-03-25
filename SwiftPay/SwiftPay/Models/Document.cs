@@ -8,7 +8,7 @@ namespace SwiftPay.Models
 		
 		public int DocumentId { get; set; }         // PK
 
-        public string RemitId { get; set; }            // FK -> RemittanceRequest (string GUID)
+        public int RemitId { get; set; }            // FK -> RemittanceRequest (int)
 
         [System.ComponentModel.DataAnnotations.Schema.ForeignKey("RemitId")]
         [System.ComponentModel.DataAnnotations.Schema.InverseProperty("Documents")]

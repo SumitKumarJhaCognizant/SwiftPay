@@ -12,5 +12,9 @@ namespace SwiftPay.DTOs.RemittanceDTO
         public string FileURI { get; set; } 
 
         public string? VerificationStatus { get; set; }
+
+        public string DocType { get; set; } // Added property
+
+        public bool IsDeleted { get; set; } // Added property
     }
 }
