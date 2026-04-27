@@ -4,6 +4,8 @@ using SwiftPay.DTOs.RefundRefDTO;
 
 namespace SwiftPay.Services.Interfaces
 {
+    using SwiftPay.Constants.Enums;
+
     public interface IRefundRefService
     {
         Task<RefundRef> CreateAsync(CreateRefundRefDto dto);
@@ -11,5 +13,6 @@ namespace SwiftPay.Services.Interfaces
         Task<IEnumerable<RefundRef>> GetAllAsync();
         Task<RefundRef> UpdateAsync(int id, CreateRefundRefDto dto);
         Task<bool> DeleteAsync(int id);
+        Task<RefundRef> UpdateStatusAsync(int id, RefundStatus status);
     }
 }

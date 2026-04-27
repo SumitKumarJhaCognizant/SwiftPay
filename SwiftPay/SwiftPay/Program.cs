@@ -31,15 +31,15 @@ builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
 var assemblies = new[] { Assembly.GetExecutingAssembly() };
 foreach (var assembly in assemblies)
 {
-	var types = assembly.GetTypes()
-		.Where(t => t.IsClass && !t.IsAbstract && (t.Name.EndsWith("Repository") || t.Name.EndsWith("Service")));
+    var types = assembly.GetTypes()
+        .Where(t => t.IsClass && !t.IsAbstract && (t.Name.EndsWith("Repository") || t.Name.EndsWith("Service")));
 
-	foreach (var type in types)
-	{
-		var interfaceType = type.GetInterface($"I{type.Name}");
-		if (interfaceType != null)
-			builder.Services.AddScoped(interfaceType, type);
-	}
+    foreach (var type in types)
+    {
+        var interfaceType = type.GetInterface($"I{type.Name}");
+        if (interfaceType != null)
+            builder.Services.AddScoped(interfaceType, type);
+    }
 }
 
 // 5. Automatic AutoMapper
@@ -52,37 +52,37 @@ builder.Services.Configure<JwtTokenSettings>(builder.Configuration.GetSection("J
 
 builder.Services.AddControllers(options =>
 {
-	// Apply a global authorization policy (all endpoints require authenticated user by default)
-	var policy = new AuthorizationPolicyBuilder()
-					.RequireAuthenticatedUser()
-					.Build();
-	options.Filters.Add(new AuthorizeFilter(policy));
+    // Apply a global authorization policy (all endpoints require authenticated user by default)
+    var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
 })
-	.AddJsonOptions(options =>
-	{
-		options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-		options.JsonSerializerOptions.PropertyNamingPolicy = null;
-	});
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 
 builder.Services.AddOpenApi();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
-	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-	var key = builder.Configuration["Jwt:Key"] ?? string.Empty;
-	options.TokenValidationParameters = new TokenValidationParameters
-	{
-		ValidateIssuer = false,
-		ValidateAudience = false,
-		ValidateIssuerSigningKey = true,
-		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-		ValidateLifetime = true
-	};
+    var key = builder.Configuration["Jwt:Key"] ?? string.Empty;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+        ValidateLifetime = true
+    };
 });
 
 builder.Services.AddAuthorization();

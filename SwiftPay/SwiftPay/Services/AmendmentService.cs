@@ -47,6 +47,17 @@ namespace SwiftPay.Services
             return await _repo.UpdateAsync(existing);
         }
 
+        public async Task<Amendment> UpdateStatusAsync(int id, Constants.Enums.AmendmentStatus status)
+        {
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) throw new KeyNotFoundException($"Amendment with ID {id} not found");
+
+            existing.Status = status;
+            existing.UpdatedDate = DateTime.UtcNow;
+
+            return await _repo.UpdateAsync(existing);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             return await _repo.DeleteAsync(id);

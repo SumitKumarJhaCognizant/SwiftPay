@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SwiftPay.Domain.Remittance.Entities;
+using SwiftPay.DTOs.RefundRefDTO;
+using SwiftPay.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using SwiftPay.Services.Interfaces;
-using SwiftPay.DTOs.RefundRefDTO;
-using SwiftPay.Domain.Remittance.Entities;
 
 namespace SwiftPay.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class RefundRefController : ControllerBase
@@ -18,6 +20,8 @@ namespace SwiftPay.Controllers
         {
             _service = service;
         }
+
+ 
 
         /// <summary>
         /// Create a new refund reference
@@ -95,6 +99,32 @@ namespace SwiftPay.Controllers
             {
                 if (ex.Message.Contains("not found")) return NotFound(new { message = ex.Message });
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the refund ref.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update refund ref status
+        /// </summary>
+        [Authorize(Roles = "Admin,Treasury")]
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(typeof(RefundRef), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.RefundStatus status)
+        {
+            try
+            {
+                var updated = await _service.UpdateStatusAsync(id, status);
+                return Ok(new { message = "RefundRef status updated successfully.", data = updated });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating refund ref status.", error = ex.Message });
             }
         }
 

@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SwiftPay.Domain.Remittance.Entities;
+using SwiftPay.DTOs.AmendmentDTO;
+using SwiftPay.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using SwiftPay.Services.Interfaces;
-using SwiftPay.DTOs.AmendmentDTO;
-using SwiftPay.Domain.Remittance.Entities;
 
 namespace SwiftPay.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class AmendmentController : ControllerBase
@@ -17,6 +19,38 @@ namespace SwiftPay.Controllers
         public AmendmentController(IAmendmentService amendmentService)
         {
             _amendmentService = amendmentService;
+        }
+
+        /// <summary>
+        /// Verify and update amendment status by a specific user
+        /// </summary>
+        /// <param name="id">Amendment ID</param>
+        /// <param name="dto">Verifier and status</param>
+        [Authorize(Roles = "Admin,Compliance")]
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(typeof(Amendment), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.AmendmentStatus status)
+        {
+            try
+            {
+                var updated = await _amendmentService.UpdateStatusAsync(id, status);
+                return Ok(new { message = "Amendment status updated successfully.", data = updated });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating amendment status.", error = ex.Message });
+            }
         }
 
         /// <summary>

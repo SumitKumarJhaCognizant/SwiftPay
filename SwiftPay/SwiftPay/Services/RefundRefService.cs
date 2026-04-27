@@ -48,6 +48,17 @@ namespace SwiftPay.Services
             return await _repo.UpdateAsync(existing);
         }
 
+        public async Task<RefundRef> UpdateStatusAsync(int id, Constants.Enums.RefundStatus status)
+        {
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) throw new KeyNotFoundException($"RefundRef with ID {id} not found");
+
+            existing.Status = status;
+            existing.UpdatedDate = DateTime.UtcNow;
+
+            return await _repo.UpdateAsync(existing);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             return await _repo.DeleteAsync(id);

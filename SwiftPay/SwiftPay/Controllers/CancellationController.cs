@@ -5,9 +5,12 @@ using System.Collections.Generic;
 using SwiftPay.Services.Interfaces;
 using SwiftPay.DTOs.CancellationDTO;
 using SwiftPay.Domain.Remittance.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SwiftPay.Controllers
 {
+    [Authorize(Roles ="Admin")]
+
     [Route("api/[controller]")]
     [ApiController]
     public class CancellationController : ControllerBase
@@ -95,6 +98,32 @@ namespace SwiftPay.Controllers
             {
                 if (ex.Message.Contains("not found")) return NotFound(new { message = ex.Message });
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the cancellation.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update cancellation status
+        /// </summary>
+        [Authorize(Roles = "Admin,Ops")]
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(typeof(Cancellation), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.CancellationStatus status)
+        {
+            try
+            {
+                var updated = await _service.UpdateStatusAsync(id, status);
+                return Ok(new { message = "Cancellation status updated successfully.", data = updated });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating cancellation status.", error = ex.Message });
             }
         }
 

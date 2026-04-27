@@ -1,5 +1,7 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using SwiftPay.Constants.Enums;
+using SwiftPay.Models;
 
 namespace SwiftPay.Domain.Remittance.Entities
 {
@@ -20,8 +22,14 @@ namespace SwiftPay.Domain.Remittance.Entities
         public bool IsDeleted { get; set; }
 
         // Navigation (Optional for Phase-1)
-        //public RemittanceRequest RemittanceRequest { get; set; }
+        [ForeignKey(nameof(RemitID))]
+        public RemittanceRequest? RemittanceRequest { get; set; }
 
-        //File changed
+        // Link the requester to the application User who created/requested the amendment.
+        // RequestedBy already holds the foreign key integer (User.UserId).
+        [ForeignKey(nameof(RequestedBy))]
+        public User? RequestedByUser { get; set; }
+
+        
     }
 }

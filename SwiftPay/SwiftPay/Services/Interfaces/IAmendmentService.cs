@@ -9,6 +9,7 @@ namespace SwiftPay.Services.Interfaces
         Task<Amendment?> GetByIdAsync(int id);
         Task<IEnumerable<Amendment>> GetAllAsync();
         Task<Amendment> UpdateAsync(int id, CreateAmendmentDto dto);
+        Task<Amendment> UpdateStatusAsync(int id, Constants.Enums.AmendmentStatus status);
         Task<bool> DeleteAsync(int id);
     }
 }

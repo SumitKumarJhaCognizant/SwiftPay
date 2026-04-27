@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using SwiftPay.Constants.Enums;
 
 namespace SwiftPay.Domain.Remittance.Entities
@@ -14,5 +15,8 @@ namespace SwiftPay.Domain.Remittance.Entities
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public bool IsDeleted { get; set; }
+
+        [ForeignKey(nameof(RemitID))]
+        public RemittanceRequest? RemittanceRequest { get; set; }
     }
 }
