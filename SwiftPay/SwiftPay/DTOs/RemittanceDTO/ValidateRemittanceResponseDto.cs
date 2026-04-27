@@ -1,21 +1,19 @@
 ﻿namespace SwiftPay.DTOs.RemittanceDTO
 {
-    public class ValidateRemittanceResponseDto
-    {
-
-        // RemitId is an integer in the domain model
-        public int RemitId { get; set; }
-
-
-		/// <summary>
-		/// Current status of the remittance (Draft / Validated / ComplianceHold).
-		/// </summary>
+	public class ValidateRemittanceResponseDto
+	{
+		public int RemitId { get; set; }
 		public string Status { get; set; } = default!;
 
-        /// <summary>
-        /// List of validation results executed for the remittance.
-        /// </summary>
-        public List<RemitValidationDto> Validations { get; set; } = new();
+		// --- FINANCIAL SUMMARY FIELDS ---
+		public decimal SendAmount { get; set; }
+		public decimal? ReceiverAmount { get; set; }
+		public decimal? RateApplied { get; set; }
+		public decimal? FeeApplied { get; set; }
+		public string? FromCurrency { get; set; }
+		public string? ToCurrency { get; set; }
+		// -------------------------------------
 
-    }
+		public List<RemitValidationDto> Validations { get; set; } = new();
+	}
 }

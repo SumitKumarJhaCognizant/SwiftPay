@@ -1,96 +1,136 @@
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using SwiftPay.Constants.Enums;
+using SwiftPay.DTOs.RemittanceDTO;
+using SwiftPay.Services.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SwiftPay.Services.Interfaces;
-using SwiftPay.DTOs.RemittanceDTO;
-using System.Linq;
 
 namespace SwiftPay.Controllers
 {
-    [ApiController]
-    [Route("api/documents")]
-    public class DocumentController : ControllerBase
-    {
-        private readonly IDocumentService _documentService;
+	[Authorize]
+	[ApiController]
+	[Route("api/[controller]")]
+	public class DocumentController : ControllerBase
+	{
+		private readonly IDocumentService _documentService;
 
-        public DocumentController(IDocumentService documentService)
-        {
-            _documentService = documentService;
-        }
+		public DocumentController(IDocumentService documentService)
+		{
+			_documentService = documentService;
+		}
 
-        [HttpPost]
-        [ProducesResponseType(typeof(DocumentResponseDto), StatusCodes.Status201Created)]
-        public async Task<IActionResult> Create([FromForm] Microsoft.AspNetCore.Http.IFormFile file, [FromForm] int remitId, [FromForm] int docType)
-        {
-            if (file == null)
-                return BadRequest(new { message = "File is required." });
+		[HttpPost]
+		[Authorize(Roles = "Customer,Agent,Compliance,Admin")]
+		public async Task<IActionResult> Create([FromForm] IFormFile file, [FromForm] CreateDocumentDto dto)
+		{
+			try
+			{
+				if (file == null) return BadRequest(new { message = "File is required." });
 
-            var created = await _documentService.CreateFromFormAsync(file, remitId, docType);
-            return CreatedAtAction(nameof(GetById), new { id = created.DocumentId }, created);
-        }
-        /// <summary>
-        /// get all the document info
-        /// </summary>
-        /// <returns></returns>
-		//[HttpGet]
-		//[ProducesResponseType(typeof(List<DocumentResponseDto>), StatusCodes.Status200OK)]
-		//[ProducesResponseType(StatusCodes.Status404NotFound)]
-		//public async Task<IActionResult> GetAll()
-		//{
-		//	var list = await _documentService.GetAllAsync();
-		//	return Ok(list);
-		//}
+				var created = await _documentService.CreateFromFormAsync(file, dto);
+				return CreatedAtAction(nameof(GetById), new { id = created.DocumentId }, created);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error creating document.", error = ex.Message });
+			}
+		}
 
 		[HttpGet("{id}")]
-        [ProducesResponseType(typeof(DocumentResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var doc = await _documentService.GetByIdAsync(id);
-            if (doc == null) return NotFound(new { message = "Document not found." });
-            return Ok(doc);
-        }
+		[Authorize(Roles = "Customer,Agent,Compliance,Admin")]
+		public async Task<IActionResult> GetById(int id)
+		{
+			try
+			{
+				var doc = await _documentService.GetByIdAsync(id);
+				if (doc == null) return NotFound(new { message = "Document not found." });
+				return Ok(doc);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error retrieving document.", error = ex.Message });
+			}
+		}
 
-        [HttpGet]
-        [ProducesResponseType(typeof(List<DocumentResponseDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetByRemitId([FromQuery] int remitId)
-        {
-            if (remitId <= 0)
-                return BadRequest(new { message = "remitId query parameter is required and must be a positive integer." });
+		[HttpGet]
+		[Authorize(Roles = "Agent,Compliance,Admin")]
+		public async Task<IActionResult> GetByRemitId([FromQuery] int remitId)
+		{
+			try
+			{
+				if (remitId <= 0) return BadRequest(new { message = "remitId is required." });
 
-            var list = await _documentService.GetByRemitIdAsync(remitId);
-            var activeDocuments = list.Where(doc => !doc.IsDeleted).ToList();
-            return Ok(activeDocuments);
-        }
+				var list = await _documentService.GetByRemitIdAsync(remitId);
+				return Ok(list);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error retrieving documents.", error = ex.Message });
+			}
+		}
 
-        [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateDocumentDto dto)
-        {
-            if (id != dto.DocumentId) return BadRequest(new { message = "DocumentId mismatch." });
-            await _documentService.UpdateAsync(dto);
-            return NoContent();
-        }
+		[HttpPut("{id}")]
+		[Authorize(Roles = "Compliance,Admin")]
+		public async Task<IActionResult> Update(int id, [FromBody] UpdateDocumentDto dto)
+		{
+			try
+			{
+				if (id != dto.DocumentId) return BadRequest(new { message = "ID mismatch." });
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var document = await _documentService.GetByIdAsync(id);
-            if (document == null || document.IsDeleted)
-                return NotFound(new { message = "Document not found or already deleted." });
+				await _documentService.UpdateAsync(dto);
+				return NoContent();
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound(new { message = "Document not found." });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Update failed.", error = ex.Message });
+			}
+		}
 
-            var updateDto = new UpdateDocumentDto
-            {
-                DocumentId = document.DocumentId,
-                DocType = document.DocType,
-                FileURI = document.FileURI,
-                IsDeleted = true
-            };
+		[HttpDelete("{id}")]
+		[Authorize(Roles = "Admin,Compliance")]
+		public async Task<IActionResult> Delete(int id)
+		{
+			try
+			{
+				var document = await _documentService.GetByIdAsync(id);
+				if (document == null) return NotFound(new { message = "Document not found." });
 
-            await _documentService.UpdateAsync(updateDto);
-            return NoContent();
-        }
-    }
+				await _documentService.DeleteAsync(id);
+				return NoContent();
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Deletion failed.", error = ex.Message });
+			}
+		}
+
+		[HttpPatch("{id}/verify")]
+		[Authorize(Roles = "Compliance,Admin")]
+		public async Task<IActionResult> VerifyDocument(int id, [FromBody] VerificationStatus status)
+		{
+			try
+			{
+				if (!Enum.IsDefined(typeof(VerificationStatus), status))
+					return BadRequest(new { message = "Invalid verification status." });
+
+				await _documentService.UpdateVerificationStatusAsync(id, status);
+				return NoContent();
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound(new { message = "Document not found." });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Verification update failed.", error = ex.Message });
+			}
+		}
+	}
 }

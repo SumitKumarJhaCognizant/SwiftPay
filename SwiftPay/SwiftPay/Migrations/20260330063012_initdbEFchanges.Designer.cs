@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SwiftPay.Configuration;
 
@@ -11,9 +12,11 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330063012_initdbEFchanges")]
+    partial class initdbEFchanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -147,6 +150,11 @@ namespace SwiftPay.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -162,12 +170,15 @@ namespace SwiftPay.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("UserID")
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("AuditID");
-
-                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("Resource");
 
@@ -260,9 +271,10 @@ namespace SwiftPay.Migrations
 
                     b.HasKey("BeneficiaryID");
 
-                    b.HasIndex("CustomerID", "AccountOrWalletNo")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                    b.HasIndex("AccountOrWalletNo")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerID");
 
                     b.ToTable("Beneficiaries");
                 });
@@ -491,8 +503,7 @@ namespace SwiftPay.Migrations
                     b.HasKey("CustomerID");
 
                     b.HasIndex("UserID")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
@@ -745,6 +756,7 @@ namespace SwiftPay.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("QuoteId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal?>("RateApplied")
@@ -1180,6 +1192,10 @@ namespace SwiftPay.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<string>("ValidationType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("ValidationId");
 
                     b.HasIndex("RemitId");
@@ -1332,14 +1348,12 @@ namespace SwiftPay.Migrations
                     b.HasKey("UserId");
 
                     b.HasIndex("Email")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                        .IsUnique();
 
                     b.HasIndex("Phone")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                        .IsUnique();
 
-                    b.ToTable("[User]", (string)null);
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.UserRole", b =>
@@ -1380,14 +1394,23 @@ namespace SwiftPay.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.HasIndex("UserId", "RoleId")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserRole");
                 });
 
             modelBuilder.Entity("SwiftPay.Domain.Notification.Entities.NotificationAlert", b =>
+                {
+                    b.HasOne("SwiftPay.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SwiftPay.Domain.Remittance.Entities.AuditLog", b =>
                 {
                     b.HasOne("SwiftPay.Models.User", "User")
                         .WithMany()
@@ -1448,7 +1471,8 @@ namespace SwiftPay.Migrations
                     b.HasOne("SwiftPay.FXModule.Api.Models.FXQuote", "FXQuote")
                         .WithMany()
                         .HasForeignKey("QuoteId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Beneficiary");
 
@@ -1484,13 +1508,13 @@ namespace SwiftPay.Migrations
                     b.HasOne("SwiftPay.Models.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SwiftPay.Models.User", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Role");

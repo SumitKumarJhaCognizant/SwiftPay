@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260324092325_initdbFinal")]
-    partial class initdbFinal
+    [Migration("20260329144803_initdbFinancialData")]
+    partial class initdbFinancialData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -756,11 +756,12 @@ namespace SwiftPay.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("QuoteId")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal?>("RateApplied")
-                        .HasPrecision(18, 8)
-                        .HasColumnType("decimal(18,8)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("RateLockId")
                         .HasColumnType("nvarchar(max)");
@@ -797,6 +798,12 @@ namespace SwiftPay.Migrations
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("RemitId");
+
+                    b.HasIndex("BeneficiaryId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("QuoteId");
 
                     b.ToTable("RemittanceRequests", (string)null);
                 });
@@ -1441,6 +1448,33 @@ namespace SwiftPay.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SwiftPay.Domain.Remittance.Entities.RemittanceRequest", b =>
+                {
+                    b.HasOne("SwiftPay.Domain.Remittance.Entities.Beneficiary", "Beneficiary")
+                        .WithMany()
+                        .HasForeignKey("BeneficiaryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SwiftPay.Domain.Remittance.Entities.CustomerProfile", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SwiftPay.FXModule.Api.Models.FXQuote", "FXQuote")
+                        .WithMany()
+                        .HasForeignKey("QuoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Beneficiary");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("FXQuote");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.Document", b =>

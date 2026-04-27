@@ -1,12 +1,19 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using SwiftPay.Services.Interfaces;
 using SwiftPay.DTOs.RemittanceDTO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Formats.Asn1;
+using SwiftPay.Constants.Enums;
+
 namespace SwiftPay.Controllers
 {
+	[Authorize] // 1. Global requirement: Must be authenticated
 	[ApiController]
-	[Route("api/remittances")]
+	[Route("api/[controller]")]
 	public class RemittancesController : ControllerBase
 	{
 		private readonly IRemittanceService _remittanceService;
@@ -18,19 +25,37 @@ namespace SwiftPay.Controllers
 			_documentService = documentService;
 		}
 
+		// --- INITIATION PHASE (Role: Customer, Agent) ---
+
 		/// <summary>
-		/// Upload supporting document for a remit and advance state to PendingCompliance.
+		/// Creates a new remittance request in Draft state.
 		/// </summary>
-        [HttpPost("{remitId:int}/documents")]
-		[ProducesResponseType(StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UploadDocument(int remitId, [FromBody] CreateDocumentDto dto)
+		[HttpPost]
+		[Authorize(Roles = "Customer,Agent,Admin")] // Only initiators can start a remit
+		[ProducesResponseType(typeof(CreateRemittanceResponseDto), StatusCodes.Status201Created)]
+		public async Task<IActionResult> Create([FromBody] CreateRemittanceDto dto)
 		{
 			try
 			{
-				if (dto == null) return BadRequest(new { message = "Request body is required." });
-                if (dto.RemitId != remitId)
-                    return BadRequest(new { message = "RemitId mismatch." });
+				var createdRemittance = await _remittanceService.CreateAsync(dto);
+				return CreatedAtAction(nameof(GetById), new { remitId = createdRemittance.RemitId }, createdRemittance);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to create remittance.", error = ex.Message });
+			}
+		}
+
+		/// <summary>
+		/// Upload supporting document and advance state to PendingCompliance.
+		/// </summary>
+		[HttpPost("{remitId:int}/documents")]
+		[Authorize(Roles = "Customer,Agent,Admin")] // The person sending the money provides the proof
+		public async Task<IActionResult> UploadDocument(int remitId, [FromBody] CreateDocumentDto dto)
+		{
+			try
+			{
+				if (dto == null || dto.RemitId != remitId) return BadRequest(new { message = "Invalid DTO or RemitId mismatch." });
 
 				var created = await _documentService.CreateAsync(dto);
 				await _remittanceService.MarkPendingComplianceAsync(remitId);
@@ -43,288 +68,104 @@ namespace SwiftPay.Controllers
 			}
 		}
 
+		// --- VALIDATION & CORRIDOR RULES (Role: Agent, Admin, System) ---
+
 		/// <summary>
-		/// Cancel a remittance (phase-1 mock refund).
+		/// Runs validation rules (Corridor/Velocity checks).
 		/// </summary>
-        [HttpPost("{remitId:int}/cancel")]
-		[ProducesResponseType(StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Cancel(int remitId, [FromBody] dynamic body)
+		[HttpPost("{remitId:int}/validate")]
+		[Authorize(Roles = "Admin,Agent")] // Usually triggered by the app/system after Draft
+		public async Task<IActionResult> Validate(int remitId)
 		{
 			try
 			{
-				string reason = body?.cancellationReason ?? string.Empty;
-				var refundRef = await _remittanceService.CancelAsync(remitId, reason);
-			
-				return Ok(new { message = "Remittance cancelled.", refundReference = refundRef });
-			}
-			catch (InvalidOperationException ex)
-			{
-				return BadRequest(new { message = ex.Message });
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to cancel remittance.", error = ex.Message });
-			}
-		}
-
-		/// <summary>
-		/// Update a remittance (replace fields).
-		/// </summary>
-        [HttpPut("{remitId:int}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Update(int remitId, [FromBody] UpdateRemittanceDto dto)
-		{
-			try
-			{
-                await _remittanceService.UpdateAsync(remitId, dto);
-				return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(
-					StatusCodes.Status500InternalServerError,
-					new { message = "Failed to update remittance.", error = ex.Message }
-				);
-			}
-		}
-
-		/// <summary>
-		/// Delete (soft) a remittance.
-		/// </summary>
-        [HttpDelete("{remitId:int}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(int remitId)
-		{
-			try
-			{
-                await _remittanceService.SoftDeleteAsync(remitId);
-                return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to delete remittance.", error = ex.Message });
-			}
-		}
-
-		/// <summary>
-		/// Update a validation record for a remittance.
-		/// </summary>
-        [HttpPut("{remitId:int}/validations/{validationId}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateValidation(int remitId, Guid validationId, [FromBody] RemitValidationDto dto)
-		{
-			try
-			{
-                if (validationId != dto.ValidationId || remitId != dto.RemitId)
-                    return BadRequest(new { message = "RemitId or ValidationId mismatch." });
-
-				await _remittanceService.UpdateValidationAsync(dto);
-				return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to update validation.", error = ex.Message });
-			}
-		}
-
-		/// <summary>
-		/// Delete a validation record for a remittance.
-		/// </summary>
-        [HttpDelete("{remitId:int}/validations/{validationId}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteValidation(int remitId, Guid validationId)
-		{
-			try
-			{
-				// optional: ensure validation belongs to remitId
-				await _remittanceService.DeleteValidationAsync(validationId);
-				return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to delete validation.", error = ex.Message });
-			}
-		}
-
-		/// <summary>
-		/// Creates a new remittance request in Draft state.
-		/// </summary>
-		[HttpPost]
-		[ProducesResponseType(typeof(CreateRemittanceResponseDto), StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public async Task<IActionResult> Create([FromBody] CreateRemittanceDto dto)
-		{
-			try
-			{
-				var createdRemittance = await _remittanceService.CreateAsync(dto);
-
-				return CreatedAtAction(
-					nameof(GetById),
-					new { remitId = createdRemittance.RemitId },
-					createdRemittance
-				);
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(
-					StatusCodes.Status500InternalServerError,
-					new { message = "Failed to create remittance.", error = ex.Message , innerError = ex.InnerException?.Message }
-					
-				);
-			}
-		}
-
-		/// <summary>
-		/// Retrieves remittance details by ID.
-		/// </summary>
-        [HttpGet("{remitId:int}")]
-		[ProducesResponseType(typeof(CreateRemittanceResponseDto), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetById(int remitId)
-		{
-			try
-			{
-                var result = await _remittanceService.GetByIdAsync(remitId);
-
-				if (result == null)
-					return NotFound(new { message = "Remittance not found." });
-
-				return Ok(result);
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(
-					StatusCodes.Status500InternalServerError,
-					new
-					{
-						message = "Failed to retrieve remittance.",
-						error = ex.Message
-					}
-				);
-			}
-		}
-
-
-		/// <summary>
-		/// Runs validation rules for a remittance.
-		/// </summary>
-        [HttpPost("{remitId:int}/validate")]
-		[ProducesResponseType(typeof(ValidateRemittanceResponseDto), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Validate(int remitId)
-		{
-			try
-			{
-                var response = await _remittanceService.ValidateAsync(remitId);
-
-				// If validation failed, service should return status Draft
-				if (response.Status != "Validated")
-				{
-					return UnprocessableEntity(response);
-				}
-
+				var response = await _remittanceService.ValidateAsync(remitId);
+				if (response.Status != "Validated") return UnprocessableEntity(response);
 				return Ok(response);
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(
-					StatusCodes.Status500InternalServerError,
-					new
-					{
-						message = "Failed to validate remittance.",
-						error = ex.Message
-					}
-				);
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Validation failed.", error = ex.Message });
 			}
 		}
 
+		// --- COMPLIANCE & ADMIN MANAGEMENT (Role: Compliance, Admin) ---
+
 		/// <summary>
-		/// Retrieves validation results for a remittance.
+		/// Retrieves all remittances (Hidden from Customers for security).
 		/// </summary>
-        [HttpGet("{remitId:int}/validations")]
-		[ProducesResponseType(typeof(List<RemitValidationDto>), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetValidations(int remitId)
+		[HttpGet]
+		[Authorize(Roles = "Admin,Compliance")]
+		public async Task<IActionResult> GetAll()
+		{
+			var remittances = await _remittanceService.GetAllAsync();
+			return Ok(remittances.Where(r => !r.IsDeleted).ToList());
+		}
+
+		/// <summary>
+		/// Update a validation record (Role: Compliance Officers).
+		/// </summary>
+		[HttpPut("validations/{validationId}")]
+		[Authorize(Roles = "Compliance,Admin")]
+		public async Task<IActionResult> UpdateValidation(Guid validationId, [FromBody] RemitValidationDto dto)
+		{
+			if (validationId != dto.ValidationId) return BadRequest(new { message = "ValidationId mismatch." });
+			await _remittanceService.UpdateValidationAsync(dto);
+			return Ok(new { message = "Validation updated." });
+		}
+
+		/// <summary>
+		/// Soft delete a remittance.
+		/// </summary>
+		[HttpDelete("{remitId:int}")]
+		[Authorize(Roles = "Admin")] // High-level restriction
+		public async Task<IActionResult> Delete(int remitId)
+		{
+			await _remittanceService.SoftDeleteAsync(remitId);
+			return NoContent();
+		}
+
+		/// <summary>
+		/// Update the verification status of a remittance by RemitId.
+		/// </summary>
+		[HttpPut("{remitId:int}/verification-status")]
+		[Authorize(Roles = "Admin,Compliance")]
+		public async Task<IActionResult> UpdateVerificationStatus(int remitId, [FromBody] RemittanceRequestStatus status)
 		{
 			try
 			{
-                var validations = await _remittanceService.GetValidationsAsync(remitId);
-
-				if (validations == null || !validations.Any())
-					return NotFound(new { message = "No validation records found." });
-
-				return Ok(validations);
+				await _remittanceService.UpdateVerificationStatusByRemitIdAsync(remitId, status);
+				return Ok(new { message = "Verification status updated successfully." });
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound(new { message = "Remittance not found or already deleted." });
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(
-					StatusCodes.Status500InternalServerError,
-					new
-					{
-						message = "Failed to retrieve validation results.",
-						error = ex.Message
-					}
-				);
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to update verification status.", error = ex.Message });
 			}
 		}
 
-		/// <summary>
-		/// Retrieves all remittances (excluding soft-deleted).
-		/// </summary>
-        [HttpGet]
-		[ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll()
+		// --- GENERAL ACCESS (Role: All Authenticated) ---
+
+		[HttpGet("{remitId:int}")]
+		[Authorize(Roles = "Customer,Agent,Compliance,Admin")]
+		public async Task<IActionResult> GetById(int remitId)
 		{
-			var remittances = await _remittanceService.GetAllAsync();
-			var activeRemittances = remittances.Where(r => !r.IsDeleted).ToList();
-			return Ok(activeRemittances);
+			var result = await _remittanceService.GetByIdAsync(remitId);
+			return result == null ? NotFound() : Ok(result);
 		}
 
-        [HttpGet("validations")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetValidationsByRemitId([FromQuery] int remitId)
-        {
-            if (remitId <= 0)
-                return BadRequest(new { message = "remitId query parameter is required and must be a positive integer." });
+		[HttpGet("{remitId:int}/validations")]
+		[Authorize(Roles = "Customer,Agent,Compliance,Admin")]
+		public async Task<IActionResult> GetValidations(int remitId)
+		{
+			var validations = await _remittanceService.GetValidationsAsync(remitId);
+			return (validations == null || !validations.Any()) ? NotFound() : Ok(validations);
+		}
 
-            var validations = await _remittanceService.GetValidationsByRemitIdAsync(remitId);
-            var activeValidations = validations.Where(v => !v.IsDeleted).ToList();
-            return Ok(activeValidations);
-        }
 
-        [HttpPut("validations/{validationId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateValidation(Guid validationId, [FromBody] RemitValidationDto dto)
-        {
-            if (validationId != dto.ValidationId)
-                return BadRequest(new { message = "ValidationId mismatch." });
+		}
 
-            await _remittanceService.UpdateValidationAsync(dto);
-            return Ok(new { message = "Validation updated successfully." });
-        }
-
-        [HttpDelete("validations/{validationId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeleteValidation(Guid validationId)
-        {
-            var validation = await _remittanceService.GetValidationByIdAsync(validationId);
-            if (validation == null || validation.IsDeleted)
-                return NotFound(new { message = "Validation not found or already deleted." });
-
-            validation.IsDeleted = true;
-            await _remittanceService.UpdateValidationAsync(validation);
-            return NoContent();
-        }
 	}
-}

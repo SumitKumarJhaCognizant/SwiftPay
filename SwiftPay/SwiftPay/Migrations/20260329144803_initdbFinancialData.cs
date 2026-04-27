@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SwiftPay.Migrations
 {
     /// <inheritdoc />
-    public partial class initdbFinal : Migration
+    public partial class initdbFinancialData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -238,34 +238,6 @@ namespace SwiftPay.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "RemittanceRequests",
-                columns: table => new
-                {
-                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    BeneficiaryId = table.Column<int>(type: "int", nullable: false),
-                    FromCurrency = table.Column<string>(type: "char(3)", unicode: false, fixedLength: true, maxLength: 3, nullable: false),
-                    ToCurrency = table.Column<string>(type: "char(3)", unicode: false, fixedLength: true, maxLength: 3, nullable: false),
-                    SendAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ReceiverAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    QuoteId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RateLockId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RateApplied = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: true),
-                    FeeApplied = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    PurposeCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SourceOfFunds = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Status = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false, defaultValue: "Draft"),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RemittanceRequests", x => x.RemitId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Role",
                 columns: table => new
                 {
@@ -341,57 +313,6 @@ namespace SwiftPay.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.UserId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RemittanceDocuments",
-                columns: table => new
-                {
-                    DocumentId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false),
-                    DocType = table.Column<int>(type: "int", maxLength: 50, nullable: false),
-                    FileURI = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: false),
-                    UploadedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    VerificationStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RemittanceDocuments", x => x.DocumentId);
-                    table.ForeignKey(
-                        name: "FK_RemittanceDocuments_RemittanceRequests_RemitId",
-                        column: x => x.RemitId,
-                        principalTable: "RemittanceRequests",
-                        principalColumn: "RemitId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RemitValidations",
-                columns: table => new
-                {
-                    ValidationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false),
-                    RuleName = table.Column<int>(type: "int", maxLength: 100, nullable: false),
-                    Result = table.Column<int>(type: "int", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    CheckedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RemitValidations", x => x.ValidationId);
-                    table.ForeignKey(
-                        name: "FK_RemitValidations_RemittanceRequests_RemitId",
-                        column: x => x.RemitId,
-                        principalTable: "RemittanceRequests",
-                        principalColumn: "RemitId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -561,6 +482,103 @@ namespace SwiftPay.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "RemittanceRequests",
+                columns: table => new
+                {
+                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CustomerId = table.Column<int>(type: "int", nullable: false),
+                    BeneficiaryId = table.Column<int>(type: "int", nullable: false),
+                    QuoteId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FromCurrency = table.Column<string>(type: "char(3)", unicode: false, fixedLength: true, maxLength: 3, nullable: false),
+                    ToCurrency = table.Column<string>(type: "char(3)", unicode: false, fixedLength: true, maxLength: 3, nullable: false),
+                    SendAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ReceiverAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    RateLockId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RateApplied = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    FeeApplied = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    PurposeCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SourceOfFunds = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false, defaultValue: "Draft"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RemittanceRequests", x => x.RemitId);
+                    table.ForeignKey(
+                        name: "FK_RemittanceRequests_Beneficiaries_BeneficiaryId",
+                        column: x => x.BeneficiaryId,
+                        principalTable: "Beneficiaries",
+                        principalColumn: "BeneficiaryID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RemittanceRequests_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "CustomerID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RemittanceRequests_FXQuote_QuoteId",
+                        column: x => x.QuoteId,
+                        principalTable: "FXQuote",
+                        principalColumn: "QuoteID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RemittanceDocuments",
+                columns: table => new
+                {
+                    DocumentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false),
+                    DocType = table.Column<int>(type: "int", maxLength: 50, nullable: false),
+                    FileURI = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: false),
+                    UploadedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    VerificationStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RemittanceDocuments", x => x.DocumentId);
+                    table.ForeignKey(
+                        name: "FK_RemittanceDocuments_RemittanceRequests_RemitId",
+                        column: x => x.RemitId,
+                        principalTable: "RemittanceRequests",
+                        principalColumn: "RemitId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RemitValidations",
+                columns: table => new
+                {
+                    ValidationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false),
+                    RuleName = table.Column<int>(type: "int", maxLength: 100, nullable: false),
+                    Result = table.Column<int>(type: "int", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    CheckedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RemitValidations", x => x.ValidationId);
+                    table.ForeignKey(
+                        name: "FK_RemitValidations_RemittanceRequests_RemitId",
+                        column: x => x.RemitId,
+                        principalTable: "RemittanceRequests",
+                        principalColumn: "RemitId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_Resource",
                 table: "AuditLogs",
@@ -609,6 +627,21 @@ namespace SwiftPay.Migrations
                 column: "RemitId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RemittanceRequests_BeneficiaryId",
+                table: "RemittanceRequests",
+                column: "BeneficiaryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RemittanceRequests_CustomerId",
+                table: "RemittanceRequests",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RemittanceRequests_QuoteId",
+                table: "RemittanceRequests",
+                column: "QuoteId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RemitValidations_RemitId",
                 table: "RemitValidations",
                 column: "RemitId");
@@ -646,9 +679,6 @@ namespace SwiftPay.Migrations
                 name: "AuditLogs");
 
             migrationBuilder.DropTable(
-                name: "Beneficiaries");
-
-            migrationBuilder.DropTable(
                 name: "Cancellations");
 
             migrationBuilder.DropTable(
@@ -659,9 +689,6 @@ namespace SwiftPay.Migrations
 
             migrationBuilder.DropTable(
                 name: "FeeRule");
-
-            migrationBuilder.DropTable(
-                name: "FXQuote");
 
             migrationBuilder.DropTable(
                 name: "KYCRecords");
@@ -700,13 +727,19 @@ namespace SwiftPay.Migrations
                 name: "UserRole");
 
             migrationBuilder.DropTable(
-                name: "Customers");
-
-            migrationBuilder.DropTable(
                 name: "RemittanceRequests");
 
             migrationBuilder.DropTable(
                 name: "Role");
+
+            migrationBuilder.DropTable(
+                name: "Beneficiaries");
+
+            migrationBuilder.DropTable(
+                name: "FXQuote");
+
+            migrationBuilder.DropTable(
+                name: "Customers");
 
             migrationBuilder.DropTable(
                 name: "User");

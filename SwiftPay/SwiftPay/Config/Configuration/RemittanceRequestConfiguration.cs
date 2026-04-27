@@ -28,7 +28,7 @@ namespace SwiftPay.Config.Configuration
 			builder.Property(r => r.SendAmount).HasPrecision(18, 2);
 			builder.Property(r => r.ReceiverAmount).HasPrecision(18, 2);
 			builder.Property(r => r.FeeApplied).HasPrecision(18, 2);
-			builder.Property(r => r.RateApplied).HasPrecision(18, 8);
+			builder.Property(r => r.RateApplied).HasPrecision(18, 4);
 
 			builder.Property(r => r.Status)
 				.HasConversion<string>()
@@ -50,6 +50,27 @@ namespace SwiftPay.Config.Configuration
 				.WithOne(d => d.RemittanceRequest)
 				.HasForeignKey(d => d.RemitId)
 				.OnDelete(DeleteBehavior.Cascade);
+			//FOREIGN KEY
+			// --- Add these inside public void Configure(EntityTypeBuilder<RemittanceRequest> builder) ---
+
+			// 1. Foreign Key to Customer
+			builder.HasOne(r => r.Customer)
+				.WithMany() // Or .WithMany(c => c.Remittances) if the navigation exists in Customer class
+				.HasForeignKey(r => r.CustomerId)
+				.OnDelete(DeleteBehavior.Restrict); // Best practice for financial records
+
+			// 2. Foreign Key to Beneficiary
+			builder.HasOne(r => r.Beneficiary)
+				.WithMany()
+				.HasForeignKey(r => r.BeneficiaryId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// 3. Foreign Key to Quote
+			// Explicitly link QuoteId to FXQuote table
+            builder.HasOne(r => r.FXQuote)
+                   .WithMany()
+                   .HasForeignKey(r => r.QuoteId)
+                   .OnDelete(DeleteBehavior.Restrict);
 		}
 
 		// --- 2. RemitValidation Configuration ---

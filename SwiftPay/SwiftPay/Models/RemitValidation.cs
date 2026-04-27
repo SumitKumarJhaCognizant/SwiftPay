@@ -1,31 +1,35 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SwiftPay.Constants.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
-using SwiftPay.Constants.Enums;
+using SwiftPay.Models;
 using SwiftPay.Domain.Remittance.Entities;
+
 namespace SwiftPay.Models
 {
-    public class RemitValidation
-    {
+	public class RemitValidation
+	{
+		[Key]
+		public Guid ValidationId { get; set; } = Guid.NewGuid();
 
-		public Guid ValidationId { get; set; }       // PK
+		// Foreign Key to the Remittance
+		public int RemitId { get; set; }
 
-        public int RemitId { get; set; }            // FK -> RemittanceRequest (int)
+		[ForeignKey("RemitId")]
+		public virtual RemittanceRequest RemittanceRequest { get; set; }
 
-        [ForeignKey("RemitId")]
-        [System.ComponentModel.DataAnnotations.Schema.InverseProperty("Validations")]
-        public virtual RemittanceRequest RemittanceRequest { get; set; }
+		//public string ValidationType { get; set; } // e.g., "KYC", "Limit", "FX_Quote"
 
-		public ValidationRuleName RuleName { get; set; }   // Limit/Velocity/Docs/Corridor
-		public Constants.Enums.ValidationResult Result { get; set; }       // Pass/Fail
+		public SwiftPay.Constants.Enums.ValidationResult Result { get; set; } // Enum: Pass, Fail, Warning
 
-		public string Message { get; set; }          // required, non-empty
-		public DateTimeOffset CheckedDate { get; set; } // default GETUTCDATE()
+		public ValidationRuleName RuleName { get; set; }
 
-		public DateTime CreatedDate { get; set; }
-		public DateTime UpdateDate { get; set; }
+		public string Message { get; set; } // e.g., "Document verified successfully"
 
-		public bool IsDeleted { get; set; }
+		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+		public DateTime? UpdateDate { get; set; }
 
+		public DateTime? CheckedDate { get; set; } // Add this property
+
+		public bool IsDeleted { get; set; } // Add this property
 	}
 }
