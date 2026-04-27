@@ -10,8 +10,8 @@ namespace SwiftPay.DTOs.RemittanceDTO
         [Required]
         public int DocType { get; set; }
 
-        [Required]
+        
         [StringLength(2048)]
-        public string FileURI { get; set; } 
+        public string? FileURI { get; set; } 
     }
 }

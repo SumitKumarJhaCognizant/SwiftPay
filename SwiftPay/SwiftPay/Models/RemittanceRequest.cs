@@ -1,6 +1,7 @@
-﻿using System;
-using SwiftPay.Constants.Enums;
+﻿using SwiftPay.Constants.Enums;
+using SwiftPay.FXModule.Api.Models;
 using SwiftPay.Models; // for Document and RemitValidation references
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 //using SwiftPay.Domain.Remittance.Enums;
 
@@ -17,8 +18,17 @@ namespace SwiftPay.Domain.Remittance.Entities
 
 		// Foreign references (by ID only for Phase-1)
 		public int CustomerId { get; set; }
+		public virtual CustomerProfile Customer { get; set; } // Add this!
 
+		// 2. Beneficiary Relationship
 		public int BeneficiaryId { get; set; }
+		public virtual Beneficiary Beneficiary { get; set; } // Add this!
+
+		// 3. FXQuote Relationship
+		public string? QuoteId { get; set; }
+		public virtual FXQuote FXQuote { get; set; } 
+
+
 
 		// Currencies (ISO 4217)
 		public string FromCurrency { get; set; }
@@ -31,7 +41,7 @@ namespace SwiftPay.Domain.Remittance.Entities
 		public decimal? ReceiverAmount { get; set; }
 
 		// FX & Fees linkage
-		public string? QuoteId { get; set; }
+		
 
 		public string? RateLockId { get; set; }
 

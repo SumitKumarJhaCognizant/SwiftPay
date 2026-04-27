@@ -56,6 +56,17 @@ namespace SwiftPay.Configuration
             // ----------------------------------------------------
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+            // Configure relationships, keys, etc.
+            modelBuilder.Entity<RemitValidation>()
+                .HasOne(rv => rv.RemittanceRequest)
+                .WithMany(rr => rr.Validations)
+                .HasForeignKey(rv => rv.RemitId);
+
+            // Update CheckedDate to allow null values
+            modelBuilder.Entity<RemitValidation>()
+                .Property(rv => rv.CheckedDate)
+                .IsRequired(false);
         }
     }
 }

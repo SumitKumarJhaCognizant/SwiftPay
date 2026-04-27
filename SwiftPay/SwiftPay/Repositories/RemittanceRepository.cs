@@ -59,12 +59,12 @@ namespace SwiftPay.Repositories
 		/// Retrieves a remittance request by its RemitId (string).
 		/// Includes related documents and validations.
 		/// </summary>
-        public async Task<RemittanceRequest?> GetByIdAsync(int remitId)
+		public async Task<RemittanceRequest?> GetByIdAsync(int remitId)
 		{
-            return await _db.Set<RemittanceRequest>()
-                .Include(r => r.Documents)
-                .Include(r => r.Validations)
-                .FirstOrDefaultAsync(r => r.RemitId == remitId && !r.IsDeleted);
+			return await _db.Set<RemittanceRequest>()
+				.Include(r => r.Documents)
+				.Include(r => r.Validations)
+				.FirstOrDefaultAsync(r => r.RemitId == remitId && !r.IsDeleted);
 		}
 
 		/// <summary>
@@ -94,23 +94,23 @@ namespace SwiftPay.Repositories
 				throw new InvalidOperationException("Validation insert failed.");
 		}
 
-        /// <summary>
-        /// Retrieves all validation records for a remittance.
-        /// </summary>
-        public async Task<List<RemitValidation>> GetValidationsByRemitIdAsync(int remitId)
-        {
-            return await _db.Set<RemitValidation>()
-                .Where(v => v.RemitId == remitId)
-                .OrderBy(v => v.CheckedDate)
-                .ToListAsync();
-        }
+		/// <summary>
+		/// Retrieves all validation records for a remittance.
+		/// </summary>
+		public async Task<List<RemitValidation>> GetValidationsByRemitIdAsync(int remitId)
+		{
+				return await _db.Set<RemitValidation>()
+				.Where(v => v.RemitId == remitId)
+				.OrderBy(v => v.CheckedDate)
+				.ToListAsync();
+		}
 
-        /// <summary>
-        /// Retrieves all remittance requests.
-        /// </summary>
-        public async Task<IEnumerable<RemittanceRequest>> GetAllAsync()
-        {
-            return await _db.Set<RemittanceRequest>().ToListAsync();
-        }
+		/// <summary>
+		/// Retrieves all remittance requests.
+		/// </summary>
+		public async Task<IEnumerable<RemittanceRequest>> GetAllAsync()
+		{
+			return await _db.Set<RemittanceRequest>().ToListAsync();
+		}
 	}
 }

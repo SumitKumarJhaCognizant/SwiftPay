@@ -18,8 +18,7 @@ namespace SwiftPay.DTOs.RemittanceDTO
 		public decimal SendAmount { get; set; }
 
 		[Required]
-		[Range(1, 999999)]
-		public int QuoteId { get; set; }
+		public string? QuoteId { get; set; }
 
 
 		// --- 3. THE COMPLIANCE ---
