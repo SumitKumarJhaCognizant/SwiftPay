@@ -19,12 +19,21 @@ namespace SwiftPay.Controllers
         }
 
         [HttpPost]
-        // 2. CREATE RULE: Strictly locked to Customers only. Admins will get a 403 Forbidden here.
-        [Authorize(Roles = "Customer")] 
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateQuote([FromBody] CreateQuoteRequestDto request)
         {
-            var response = await _service.GenerateQuoteAsync(request);
-            return Ok(response); 
+            if (request.SendAmount <= 0)
+                return BadRequest(new { message = "Send amount must be greater than zero." });
+
+            try
+            {
+                var response = await _service.GenerateQuoteAsync(request);
+                return Ok(response);
+            }
+            catch (NotSupportedException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]

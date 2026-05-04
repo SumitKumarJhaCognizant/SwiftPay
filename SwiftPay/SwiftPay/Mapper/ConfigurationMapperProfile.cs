@@ -648,13 +648,22 @@ namespace SwiftPay.Mapper
                 .ForMember(dest => dest.MidRate, opt => opt.Ignore())
                 .ForMember(dest => dest.MarginBps, opt => opt.Ignore())
                 .ForMember(dest => dest.OfferedRate, opt => opt.Ignore())
+                .ForMember(dest => dest.ReceiverAmount, opt => opt.Ignore())
+                .ForMember(dest => dest.Fee, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
 
             // FXQuote -> FXQuoteResponseDto
             CreateMap<SwiftPay.FXModule.Api.Models.FXQuote, SwiftPay.DTOs.FXQuoteDTO.FXQuoteResponseDto>()
-                .ForMember(dest => dest.FeeApplied, opt => opt.Ignore());
+                .ForMember(dest => dest.QuoteId, opt => opt.MapFrom(src => src.QuoteID))
+                .ForMember(dest => dest.SendAmount, opt => opt.MapFrom(src => src.SendAmount))
+                .ForMember(dest => dest.ReceiverAmount, opt => opt.MapFrom(src => src.ReceiverAmount))
+                .ForMember(dest => dest.MidRate, opt => opt.MapFrom(src => src.MidRate))
+                .ForMember(dest => dest.MarginBps, opt => opt.MapFrom(src => src.MarginBps))
+                .ForMember(dest => dest.OfferedRate, opt => opt.MapFrom(src => src.OfferedRate))
+                .ForMember(dest => dest.Fee, opt => opt.MapFrom(src => src.Fee))
+                .ForMember(dest => dest.ValidUntil, opt => opt.MapFrom(src => src.ValidUntil));
 
             // CreateFeeRuleRequestDto -> FeeRule
             CreateMap<SwiftPay.DTOs.FXQuoteDTO.CreateFeeRuleRequestDto, SwiftPay.FXModule.Api.Models.FeeRule>()

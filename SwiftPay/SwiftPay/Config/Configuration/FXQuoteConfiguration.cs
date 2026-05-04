@@ -24,8 +24,11 @@ namespace SwiftPay.Config.Configuration
             builder.Property(f => f.Status).IsRequired().HasDefaultValue(FXQuoteStatus.Active);
             
             builder.Property(f => f.QuoteTime).HasDefaultValueSql("GETUTCDATE()");
+            builder.Property(f => f.SendAmount).HasPrecision(18, 4);
+            builder.Property(f => f.ReceiverAmount).HasPrecision(18, 4);
             builder.Property(f => f.MidRate).HasPrecision(18, 6);
             builder.Property(f => f.OfferedRate).HasPrecision(18, 6);
+            builder.Property(f => f.Fee).HasPrecision(18, 4);
 
             builder.Property(f => f.CreatedDate).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(f => f.UpdateDate).HasDefaultValueSql("GETUTCDATE()");
