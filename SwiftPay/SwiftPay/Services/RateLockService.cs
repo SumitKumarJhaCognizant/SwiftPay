@@ -12,31 +12,63 @@ namespace SwiftPay.Services
     public class RateLockService : IRateLockService
     {
         private readonly IRateLockRepository _repo;
+        private readonly IFXQuoteRepository _quoteRepo; // --- ADDED: Inject the Quote Repository ---
         private readonly IMapper _mapper;
 
-        public RateLockService(IRateLockRepository repo, IMapper mapper)
+        public RateLockService(IRateLockRepository repo, IFXQuoteRepository quoteRepo, IMapper mapper)
         {
             _repo = repo;
+            _quoteRepo = quoteRepo; // Assign it here
             _mapper = mapper;
         }
 
         public async Task<RateLockResponseDto> LockRateAsync(CreateRateLockRequestDto request)
         {
-            // 1. Map from Request DTO to Database Model
+            // ==========================================
+            //       THE SECURITY CHECKPOINT (BOUNCER)
+            // ==========================================
+            
+            // 1. Find the exact Quote in the database
+            var quote = await _quoteRepo.GetQuoteByIdAsync(request.QuoteID);
+            
+            // 2. Does the quote even exist?
+            if (quote == null) 
+                throw new Exception("Quote not found.");
+
+            // 3. WHO OWNS IT? (This stops Customer from stealing other Customer's quote!)
+            if (quote.CustomerID != request.CustomerID) 
+                throw new UnauthorizedAccessException("You are not authorized to lock this quote.");
+
+            // 4. Is the quote already locked or used?
+            if (quote.Status != FXQuoteStatus.Active) 
+                throw new InvalidOperationException("This quote is no longer active and cannot be locked.");
+
+            // 5. Is it expired? (Older than 15 minutes)
+            if (quote.ValidUntil < DateTime.UtcNow)
+            {
+                quote.Status = FXQuoteStatus.Expired;
+                await _quoteRepo.UpdateQuoteAsync(quote); // Mark it as expired in DB
+                throw new InvalidOperationException("This quote has expired. Please generate a new one.");
+            }
+            
+            // ==========================================
+
+            // If it survives all checks, map it to the database model
             var newLock = _mapper.Map<RateLock>(request);
             
-            // 2. Set the business logic defaults
+            // Set the business logic defaults
             newLock.Status = RateLockStatus.Locked;
             newLock.LockStart = DateTime.UtcNow;
-            
-            // --- ADDED THIS LINE TO ENFORCE THE 15-MINUTE WINDOW ---
             newLock.LockExpiry = DateTime.UtcNow.AddMinutes(15);
-            // -------------------------------------------------------
-
-            // 3. Save to database
+            
+            // Save the new Rate Lock to the database
             var savedLock = await _repo.CreateRateLockAsync(newLock);
 
-            // 4. Map saved Model back to Response DTO
+            // SYSTEM UPDATE: Update the original Quote's status to Locked so it can't be used twice!
+            quote.Status = FXQuoteStatus.Locked;
+            await _quoteRepo.UpdateQuoteAsync(quote);
+
+            // Map saved Model back to Response DTO
             return _mapper.Map<RateLockResponseDto>(savedLock);
         }
         
