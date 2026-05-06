@@ -1,12 +1,17 @@
 using System;
-using SwiftPay.Constants.Enums; // Added reference to your Enums namespace
+using SwiftPay.Constants.Enums; 
 
 namespace SwiftPay.FXModule.Api.Models
 {
     public class FXQuote
     {
-        public string QuoteID { get; set; }
-        public string FromCurrency { get; set; }
+        public string QuoteID { get; set; } 
+        
+        // --- ADDED: The security link to tie the quote to the user ---
+        public string CustomerID { get; set; } 
+        // ----------------------------------------------------------------
+
+        public string FromCurrency { get; set; } 
         public string ToCurrency { get; set; }
         public decimal SendAmount { get; set; }
         public decimal ReceiverAmount { get; set; }
@@ -15,8 +20,8 @@ namespace SwiftPay.FXModule.Api.Models
         public decimal OfferedRate { get; set; }
         public decimal Fee { get; set; }
         public DateTime QuoteTime { get; set; }
-        public DateTime ValidUntil { get; set; }
-        public FXQuoteStatus Status { get; set; }
+        public DateTime ValidUntil { get; set; } 
+        public FXQuoteStatus Status { get; set; } 
 
         // Audit & Soft Delete Fields
         public DateTime CreatedDate { get; set; }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System.Security.Claims; // ADDED: Required to read the JWT Token claims
 using SwiftPay.DTOs.FXQuoteDTO;
 using SwiftPay.Services.Interfaces;
 
@@ -8,7 +9,7 @@ namespace SwiftPay.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // 1. BASE REQUIREMENT: Anyone accessing this controller must be logged in.
+    [Authorize] 
     public class FXQuotesController : ControllerBase
     {
         private readonly IFXQuoteService _service;
@@ -19,25 +20,23 @@ namespace SwiftPay.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Customer,Agent,Admin")]
+        [Authorize(Roles = "Customer")] 
         public async Task<IActionResult> CreateQuote([FromBody] CreateQuoteRequestDto request)
         {
-            if (request.SendAmount <= 0)
-                return BadRequest(new { message = "Send amount must be greater than zero." });
+            // --- CATCH AND ATTACH THE ID ---
+            // 1. Extract the secure ID from the user's logged-in token
+            var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            // 2. Attach it to the DTO before sending it down to the service
+            request.CustomerID = customerId;
+            // -------------------------------
 
-            try
-            {
-                var response = await _service.GenerateQuoteAsync(request);
-                return Ok(response);
-            }
-            catch (NotSupportedException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var response = await _service.GenerateQuoteAsync(request);
+            return Ok(response); 
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Customer,Agent,Admin,Treasury,Ops")]
+        [Authorize(Roles = "Customer,Admin")] 
         public async Task<IActionResult> GetQuote(string id)
         {
             var response = await _service.GetQuoteAsync(id);

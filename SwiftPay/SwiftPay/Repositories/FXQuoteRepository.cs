@@ -21,7 +21,7 @@ namespace SwiftPay.Repositories
         {
             await _context.FXQuotes.AddAsync(quote);
             await _context.SaveChangesAsync();
-            return quote; // Returns the quote with the newly generated SQL ID
+            return quote; 
         }
 
         public async Task<FXQuote> GetQuoteByIdAsync(string quoteId)
@@ -29,12 +29,13 @@ namespace SwiftPay.Repositories
             return await _context.FXQuotes.FirstOrDefaultAsync(q => q.QuoteID == quoteId && !q.IsDeleted);
         }
 
-        public async Task<IEnumerable<FXQuote>> GetAllQuotesAsync()
+        // --- ADDED: The implementation to save the updated status to SQL Server ---
+        public async Task<FXQuote> UpdateQuoteAsync(FXQuote quote)
         {
-            return await _context.FXQuotes
-                .Where(q => !q.IsDeleted)
-                .OrderByDescending(q => q.QuoteTime)
-                .ToListAsync();
+            _context.FXQuotes.Update(quote);
+            await _context.SaveChangesAsync();
+            return quote;
         }
+        // --------------------------------------------------------------------------
     }
 }
