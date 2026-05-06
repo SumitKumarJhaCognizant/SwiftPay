@@ -5,6 +5,9 @@ using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.DTOs.AmendmentDTO;
 using SwiftPay.DTOs.CancellationDTO;
 using SwiftPay.DTOs.ComplianceDTO;
+using SwiftPay.DTOs.KycAuditRecordDTO;
+using SwiftPay.DTOs.PayoutDTO;
+using SwiftPay.DTOs.RoutingDTO;
 using SwiftPay.DTOs.ReconciliationDTO;
 using SwiftPay.DTOs.RefundRefDTO;
 using SwiftPay.DTOs.RemitReportDTO;
@@ -51,18 +54,15 @@ namespace SwiftPay.Mapper
 				.ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
 				.ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-            // 3. RemittanceRequest -> CreateRemittanceResponseDto (Outbound)
+            // 3. RemittanceRequest -> CreateRemittanceResponseDto (Outbound) — single authoritative mapping
             CreateMap<RemittanceRequest, CreateRemittanceResponseDto>()
-                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.SendAmount))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                // If these fields match exactly in name, AutoMapper does them automatically:
-                .ForMember(dest => dest.RemitId, opt => opt.MapFrom(src => src.RemitId))
-                .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.CustomerId))
-                .ForMember(dest => dest.BeneficiaryId, opt => opt.MapFrom(src => src.BeneficiaryId))
-                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.CreatedDate))
-                .ForMember(dest => dest.ReceiverAmount, opt => opt.MapFrom(src => src.ReceiverAmount))
-                .ForMember(dest => dest.RateApplied, opt => opt.MapFrom(src => src.RateApplied))
-                .ForMember(dest => dest.FeeApplied, opt => opt.MapFrom(src => src.FeeApplied));
+                .ForMember(dest => dest.Status,        opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.SendAmount,    opt => opt.MapFrom(src => src.SendAmount))
+                .ForMember(dest => dest.Amount,        opt => opt.MapFrom(src => src.SendAmount))   // alias
+                .ForMember(dest => dest.QuoteId,       opt => opt.MapFrom(src => src.QuoteId))
+                .ForMember(dest => dest.PurposeCode,   opt => opt.MapFrom(src => src.PurposeCode))
+                .ForMember(dest => dest.SourceOfFunds, opt => opt.MapFrom(src => src.SourceOfFunds))
+                .ForMember(dest => dest.IsDeleted,     opt => opt.MapFrom(src => src.IsDeleted));
 
 			// 4. RemittanceRequest -> ValidateRemittanceResponseDto (Outbound)
 			CreateMap<RemittanceRequest, ValidateRemittanceResponseDto>()
@@ -132,17 +132,7 @@ namespace SwiftPay.Mapper
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt));
-            // Map RemittanceRequest -> CreateRemittanceResponseDto
-            CreateMap<RemittanceRequest, CreateRemittanceResponseDto>()
-                .ForMember(dest => dest.RemitId, opt => opt.MapFrom(src => src.RemitId))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.FromCurrency, opt => opt.MapFrom(src => src.FromCurrency))
-                .ForMember(dest => dest.ToCurrency, opt => opt.MapFrom(src => src.ToCurrency))
-                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.SendAmount))
-                .ForMember(dest => dest.ReceiverAmount, opt => opt.MapFrom(src => src.ReceiverAmount))
-                .ForMember(dest => dest.RateApplied, opt => opt.MapFrom(src => src.RateApplied))
-                .ForMember(dest => dest.FeeApplied, opt => opt.MapFrom(src => src.FeeApplied))
-                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.CreatedDate));
+            // Duplicate removed — see "single authoritative mapping" above.
 
             // ===== ROLE MAPPINGS =====
 
@@ -438,7 +428,48 @@ namespace SwiftPay.Mapper
                 .ForMember(dest => dest.CheckedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
-                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+
+            // ComplianceDecision mappings
+            CreateMap<CreateComplianceDecisionDto, ComplianceDecision>()
+                .ForMember(dest => dest.DecisionId, opt => opt.Ignore())
+                .ForMember(dest => dest.DecisionDate, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+
+            // Payout Instruction mappings
+            CreateMap<CreatePayoutInstructionDto, PayoutInstruction>()
+                .ForMember(dest => dest.InstructionId, opt => opt.Ignore())
+                .ForMember(dest => dest.SentDate, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+            CreateMap<PayoutInstruction, PayoutInstructionResponseDto>();
+
+            // Routing Rule mappings
+            CreateMap<CreateRoutingRuleDto, RoutingRule>()
+                .ForMember(dest => dest.RuleId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdateDate, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+            CreateMap<RoutingRule, RoutingRuleResponseDto>();
+
+            // ===== KYC DOCUMENT MAPPINGS =====
+            CreateMap<CreateKYCDocumentDto, SwiftPay.Models.KYCDocument>()
+                .ForMember(d => d.KYCDocumentId, o => o.Ignore())
+                .ForMember(d => d.UploadedDate, o => o.Ignore())
+                .ForMember(d => d.VerificationStatus, o => o.Ignore())
+                .ForMember(d => d.CreatedAt, o => o.Ignore())
+                .ForMember(d => d.UpdatedAt, o => o.Ignore())
+                .ForMember(d => d.IsDeleted, o => o.Ignore())
+                .ForMember(d => d.KYC, o => o.Ignore());
+
+            CreateMap<SwiftPay.Models.KYCDocument, KYCDocumentResponseDto>();
 
             // ===== KYC RECORD MAPPINGS =====
 

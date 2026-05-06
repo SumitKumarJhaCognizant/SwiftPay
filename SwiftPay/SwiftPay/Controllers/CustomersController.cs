@@ -151,12 +151,11 @@ namespace SwiftPay.Controllers
                 if (!int.TryParse(userIdClaim, out var currentUserId))
                     return Forbid();
 
-                // Allow Admins to bypass ownership checks
-                if (!User.IsInRole("Admin"))
-                {
-                    if (customer.UserID != currentUserId)
-                        return Forbid();
-                }
+                // Privileged staff (Admin, Agent, Ops, Compliance) can read any customer profile.
+                var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Agent")
+                                   || User.IsInRole("Ops") || User.IsInRole("Compliance");
+                if (!isPrivileged && customer.UserID != currentUserId)
+                    return Forbid();
 
                 return Ok(new { message = "Customer retrieved successfully.", data = customer });
             }
@@ -201,7 +200,7 @@ namespace SwiftPay.Controllers
         /// <response code="200">Customers retrieved successfully</response>
         /// <response code="500">Server error</response>
         [HttpGet]
-        [Authorize(Roles = "Admin,Ops")]
+        [Authorize(Roles = "Admin,Ops,Agent")]
         [ProducesResponseType(typeof(IEnumerable<CustomerResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()

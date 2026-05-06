@@ -32,6 +32,7 @@ namespace SwiftPay.Configuration
         // DbSets for audit, KYC, and notification modules
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<KYCRecord> KYCRecords { get; set; }
+        public DbSet<KYCDocument> KYCDocuments { get; set; }
         public DbSet<NotificationAlert> NotificationAlerts { get; set; }
 
 

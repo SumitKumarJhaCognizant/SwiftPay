@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260504084345_MigrationName")]
-    partial class MigrationName
+    [Migration("20260504111445_AckRefNullable")]
+    partial class AckRefNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -566,7 +566,6 @@ namespace SwiftPay.Migrations
                         .HasDefaultValueSql("NEWID()");
 
                     b.Property<string>("AckRef")
-                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
@@ -881,6 +880,10 @@ namespace SwiftPay.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<decimal>("Fee")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<string>("FromCurrency")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -906,6 +909,14 @@ namespace SwiftPay.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<decimal>("ReceiverAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SendAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
@@ -1349,7 +1360,7 @@ namespace SwiftPay.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("[User]", (string)null);
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.UserRole", b =>

@@ -6,31 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SwiftPay.Migrations
 {
     /// <inheritdoc />
-    public partial class MigrationName : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "[User]",
-                columns: table => new
-                {
-                    UserId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Active"),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_[User]", x => x.UserId);
-                });
-
             migrationBuilder.CreateTable(
                 name: "AuditLogs",
                 columns: table => new
@@ -118,9 +98,12 @@ namespace SwiftPay.Migrations
                     QuoteID = table.Column<string>(type: "nvarchar(450)", nullable: false, defaultValueSql: "NEWID()"),
                     FromCurrency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     ToCurrency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    SendAmount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    ReceiverAmount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     MidRate = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
                     MarginBps = table.Column<int>(type: "int", nullable: false),
                     OfferedRate = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
+                    Fee = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     QuoteTime = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     ValidUntil = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
@@ -272,6 +255,26 @@ namespace SwiftPay.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "User",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Active"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_User", x => x.UserId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Customers",
                 columns: table => new
                 {
@@ -291,9 +294,9 @@ namespace SwiftPay.Migrations
                 {
                     table.PrimaryKey("PK_Customers", x => x.CustomerID);
                     table.ForeignKey(
-                        name: "FK_Customers_[User]_UserID",
+                        name: "FK_Customers_User_UserID",
                         column: x => x.UserID,
-                        principalTable: "[User]",
+                        principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -317,9 +320,9 @@ namespace SwiftPay.Migrations
                 {
                     table.PrimaryKey("PK_KYCRecords", x => x.KYCID);
                     table.ForeignKey(
-                        name: "FK_KYCRecords_[User]_UserID",
+                        name: "FK_KYCRecords_User_UserID",
                         column: x => x.UserID,
-                        principalTable: "[User]",
+                        principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -344,9 +347,9 @@ namespace SwiftPay.Migrations
                 {
                     table.PrimaryKey("PK_NotificationAlerts", x => x.NotificationID);
                     table.ForeignKey(
-                        name: "FK_NotificationAlerts_[User]_UserID",
+                        name: "FK_NotificationAlerts_User_UserID",
                         column: x => x.UserID,
-                        principalTable: "[User]",
+                        principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -374,9 +377,9 @@ namespace SwiftPay.Migrations
                         principalColumn: "RoleId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_UserRole_[User]_UserId",
+                        name: "FK_UserRole_User_UserId",
                         column: x => x.UserId,
-                        principalTable: "[User]",
+                        principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -486,9 +489,9 @@ namespace SwiftPay.Migrations
                         principalColumn: "RemitId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Amendments_[User]_RequestedBy",
+                        name: "FK_Amendments_User_RequestedBy",
                         column: x => x.RequestedBy,
-                        principalTable: "[User]",
+                        principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -596,20 +599,6 @@ namespace SwiftPay.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_[User]_Email",
-                table: "[User]",
-                column: "Email",
-                unique: true,
-                filter: "[IsDeleted] = 0");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_[User]_Phone",
-                table: "[User]",
-                column: "Phone",
-                unique: true,
-                filter: "[IsDeleted] = 0");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Amendments_RemitID",
                 table: "Amendments",
                 column: "RemitID");
@@ -699,6 +688,20 @@ namespace SwiftPay.Migrations
                 column: "RemitId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_User_Email",
+                table: "User",
+                column: "Email",
+                unique: true,
+                filter: "[IsDeleted] = 0");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_User_Phone",
+                table: "User",
+                column: "Phone",
+                unique: true,
+                filter: "[IsDeleted] = 0");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRole_RoleId",
                 table: "UserRole",
                 column: "RoleId");
@@ -784,7 +787,7 @@ namespace SwiftPay.Migrations
                 name: "Customers");
 
             migrationBuilder.DropTable(
-                name: "[User]");
+                name: "User");
         }
     }
 }

@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260504100452_AddFXQuoteAmountFields")]
-    partial class AddFXQuoteAmountFields
+    [Migration("20260504104149_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1361,7 +1361,7 @@ namespace SwiftPay.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("[User]", (string)null);
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.UserRole", b =>

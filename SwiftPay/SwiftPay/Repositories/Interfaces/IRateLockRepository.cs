@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using SwiftPay.FXModule.Api.Models;
 
@@ -7,5 +8,6 @@ namespace SwiftPay.Repositories.Interfaces
     {
         Task<RateLock> CreateRateLockAsync(RateLock rateLock);
         Task<RateLock> GetRateLockByIdAsync(string lockId);
+        Task<IEnumerable<RateLock>> GetAllRateLocksAsync();
     }
 }

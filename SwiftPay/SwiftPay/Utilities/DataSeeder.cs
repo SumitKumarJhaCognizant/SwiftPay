@@ -65,7 +65,7 @@ public static class DataSeeder
         // 4. Create Admin Role Link
         var adminRole = existingRoles.First(r => r.RoleType == RoleType.Admin);
         var userRoles = await userRoleRepo.GetByRoleIdAsync(adminRole.RoleId);
-        
+
         if (!userRoles.Any(ur => ur.UserId == user.UserId))
         {
             await userRoleRepo.CreateAsync(new UserRole
@@ -76,6 +76,43 @@ public static class DataSeeder
                 CreatedAt = DateTime.UtcNow
             });
             Console.WriteLine($"[SEED] Linked Admin Role to: {seedEmail}");
+        }
+
+        // 5. Seed one demo user per non-Customer role for easy login during demo / grading.
+        // Password is the same as SeedAdmin:Password for convenience in dev.
+        var demoUsers = new (string Email, string Name, string Phone, RoleType Role)[]
+        {
+            ("agent@swiftpay.local",      "Demo Agent",      "+10000000001", RoleType.Agent),
+            ("compliance@swiftpay.local", "Demo Compliance", "+10000000002", RoleType.Compliance),
+            ("ops@swiftpay.local",        "Demo Ops",        "+10000000003", RoleType.Ops),
+            ("treasury@swiftpay.local",   "Demo Treasury",   "+10000000004", RoleType.Treasury),
+        };
+
+        foreach (var (email, name, phone, roleType) in demoUsers)
+        {
+            var existing = await userRepo.GetByEmailAsync(email);
+            if (existing != null) continue;
+
+            var demoEntity = new User
+            {
+                Name = name,
+                Email = email,
+                Phone = phone,
+                PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(seedPassword),
+                Status = UserStatus.Active,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            var created = await userRepo.CreateAsync(demoEntity);
+            var role = existingRoles.First(r => r.RoleType == roleType);
+            await userRoleRepo.CreateAsync(new UserRole
+            {
+                UserId = created.UserId,
+                RoleId = role.RoleId,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            Console.WriteLine($"[SEED] Created demo {roleType} user: {email}");
         }
     }
 }

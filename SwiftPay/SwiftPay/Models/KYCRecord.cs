@@ -25,7 +25,7 @@ namespace SwiftPay.Domain.Remittance.Entities
 
         public bool IsDeleted { get; set; }
 
-        // navigation
-        public User User { get; set; }
+        // navigation (optional to play nicely with User's soft-delete query filter)
+        public User? User { get; set; }
     }
 }

@@ -33,14 +33,16 @@ namespace SwiftPay.Config.Configuration
                 .HasConversion<string>()
                 .IsRequired()
                 .HasMaxLength(20)
-                .HasDefaultValue(ComplianceResult.Pending); // No more "Pending" string
+                .HasSentinel(ComplianceResult.Pending)
+                .HasDefaultValue(ComplianceResult.Pending);
 
             // CHANGE 3: Convert Severity Enum to String & use Enum for Default Value
             builder.Property(c => c.Severity)
                 .HasConversion<string>()
                 .IsRequired()
                 .HasMaxLength(20)
-                .HasDefaultValue(ComplianceSeverity.Low); // No more "Low" string
+                .HasSentinel(ComplianceSeverity.Low)
+                .HasDefaultValue(ComplianceSeverity.Low);
 
             builder.Property(c => c.CheckedDate).HasDefaultValueSql("GETUTCDATE()");
 
@@ -107,6 +109,7 @@ namespace SwiftPay.Config.Configuration
                 .HasConversion<string>() // Tells EF to store the Enum name (e.g., "Active")
                 .IsRequired()
                 .HasMaxLength(20)
+                .HasSentinel(RoutingRuleStatus.Inactive)
                 .HasDefaultValue(RoutingRuleStatus.Active);
 
             // Audit Fields
@@ -145,6 +148,7 @@ namespace SwiftPay.Config.Configuration
                 .HasConversion<string>() // Saves as "Sent", "Ack", etc.
                 .IsRequired()
                 .HasMaxLength(32)
+                .HasSentinel(PayOutInstructionStatus.Sent)
                 .HasDefaultValue(PayOutInstructionStatus.Sent);
 
             builder.Property(p => p.SentDate).HasDefaultValueSql("GETUTCDATE()");

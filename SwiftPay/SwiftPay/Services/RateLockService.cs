@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using SwiftPay.Constants.Enums;
@@ -44,8 +46,13 @@ namespace SwiftPay.Services
         {
             var rateLock = await _repo.GetRateLockByIdAsync(lockId);
             if (rateLock == null) return null;
-
             return _mapper.Map<RateLockResponseDto>(rateLock);
+        }
+
+        public async Task<IEnumerable<RateLockResponseDto>> GetAllRateLocksAsync()
+        {
+            var all = await _repo.GetAllRateLocksAsync();
+            return all.Select(l => _mapper.Map<RateLockResponseDto>(l));
         }
     }
 }

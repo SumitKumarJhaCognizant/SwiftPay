@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using SwiftPay.Services.Interfaces;
@@ -8,6 +9,7 @@ namespace SwiftPay.Controllers
 {
     [Route("api/[controller]")] // This makes your URL: api/Compliance
     [ApiController]             // This tells ASP.NET this is a Web API
+    [Authorize(Roles = "Compliance,Admin")]
     public class ComplianceController : ControllerBase // ": ControllerBase" is essential
     {
         private readonly IComplianceCheckService _service;

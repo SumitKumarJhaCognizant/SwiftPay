@@ -19,7 +19,7 @@ namespace SwiftPay.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Agent,Admin")]
         public async Task<IActionResult> CreateQuote([FromBody] CreateQuoteRequestDto request)
         {
             if (request.SendAmount <= 0)
@@ -37,14 +37,20 @@ namespace SwiftPay.Controllers
         }
 
         [HttpGet("{id}")]
-        // 3. READ RULE: Both Customers and Admins can view the quote. (Note: No spaces in the string!)
-        [Authorize(Roles = "Customer,Admin")] 
+        [Authorize(Roles = "Customer,Agent,Admin,Treasury,Ops")]
         public async Task<IActionResult> GetQuote(string id)
         {
             var response = await _service.GetQuoteAsync(id);
             if (response == null) return NotFound($"Quote with ID {id} not found.");
-            
             return Ok(response);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Treasury,Ops")]
+        public async Task<IActionResult> GetAll()
+        {
+            var all = await _service.GetAllQuotesAsync();
+            return Ok(new { message = "FX quotes retrieved.", data = all });
         }
     }
 }

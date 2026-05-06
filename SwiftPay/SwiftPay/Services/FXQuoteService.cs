@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -107,6 +108,24 @@ namespace SwiftPay.Services
                 Fee = applicableRule?.FeeValue ?? quote.Fee,
                 ValidUntil = quote.ValidUntil
             };
+        }
+
+        public async Task<IEnumerable<FXQuoteResponseDto>> GetAllQuotesAsync()
+        {
+            var all = await _repo.GetAllQuotesAsync();
+            return all.Select(q => new FXQuoteResponseDto
+            {
+                QuoteId      = q.QuoteID,
+                FromCurrency = q.FromCurrency,
+                ToCurrency   = q.ToCurrency,
+                SendAmount   = q.SendAmount,
+                ReceiverAmount = q.ReceiverAmount,
+                MidRate      = q.MidRate,
+                MarginBps    = q.MarginBps,
+                OfferedRate  = q.OfferedRate,
+                Fee          = q.Fee,
+                ValidUntil   = q.ValidUntil,
+            });
         }
 
         private decimal GetMockMarketRate(string corridor)
