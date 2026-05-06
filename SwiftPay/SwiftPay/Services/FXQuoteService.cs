@@ -1,5 +1,6 @@
 using System;
-using System.Linq; // Added for LINQ filtering
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using SwiftPay.Constants.Enums;
@@ -14,7 +15,7 @@ namespace SwiftPay.Services
     {
         private readonly IFXQuoteRepository _repo;
         private readonly IMapper _mapper;
-        private readonly IFeeRuleRepository _feeRepo; 
+        private readonly IFeeRuleRepository _feeRepo;
 
         public FXQuoteService(IFXQuoteRepository repo, IMapper mapper, IFeeRuleRepository feeRepo)
         {
@@ -25,102 +26,160 @@ namespace SwiftPay.Services
 
         public async Task<FXQuoteResponseDto> GenerateQuoteAsync(CreateQuoteRequestDto request)
         {
-            var newQuote = _mapper.Map<FXQuote>(request);
-            
-            // 1. Identify the Corridor (e.g., "EUR-INR")
-            string corridor = $"{request.FromCurrency.ToUpper()}-{request.ToCurrency.ToUpper()}";
+            string fromCcy = request.FromCurrency.ToUpper();
+            string toCcy = request.ToCurrency.ToUpper();
+            string corridor = $"{fromCcy}-{toCcy}";
 
-            // 2. Fetch the current market rate (Mid-Rate)
             decimal midRate = GetMockMarketRate(corridor);
 
-            // 3. Business Math: Calculate our profit margin
-            // 1 Basis Point (BPS) = 0.01% (or 0.0001 in decimal)
-            int marginBps = 50; // SwiftPay takes a 50 bps margin on all trades
-            decimal marginMultiplier = marginBps / 10000m; // Equals 0.0050
+            // 50 bps margin — subtract from mid-rate so SwiftPay earns on the spread
+            int marginBps = 50;
+            decimal marginMultiplier = marginBps / 10000m;
+            decimal offeredRate = Math.Round(midRate * (1 - marginMultiplier), 6);
 
-            // 4. Calculate the Final Offered Rate
-            // We subtract the margin from the market rate to ensure SwiftPay makes a profit on the spread
-            decimal offeredRate = midRate * (1 - marginMultiplier);
-
-            // 5. Apply the calculated values to our model
-            newQuote.MidRate = midRate;
-            newQuote.MarginBps = marginBps;
-            newQuote.OfferedRate = Math.Round(offeredRate, 6); // FX rates standard is 6 decimal places
-            
-            newQuote.QuoteTime = DateTime.UtcNow;
-            newQuote.ValidUntil = DateTime.UtcNow.AddMinutes(15);
-            newQuote.Status = FXQuoteStatus.Active;
-
-            // 6. Save the PURE quote to Database (No fees saved here!)
-            var savedQuote = await _repo.AddQuoteAsync(newQuote);
-
-            // 7. Map the database entity to our response envelope
-            var responseDto = _mapper.Map<FXQuoteResponseDto>(savedQuote);
-
-            // --- 8. THE MAGIC TRICK & TIE-BREAKER ---
+            // Resolve applicable fee for this corridor
             var allRules = await _feeRepo.GetAllActiveFeeRulesAsync();
-            
-            // Ensure we grab the MOST RECENT rule for this corridor
             var applicableRule = allRules
                 .Where(r => r.Corridor == corridor)
-                .OrderByDescending(r => r.CreatedDate) // Sort newest first
+                .OrderByDescending(r => r.CreatedDate)
                 .FirstOrDefault();
 
-            // Slip the fee into the envelope (if no rule exists, default to 0)
-            responseDto.FeeApplied = applicableRule != null ? applicableRule.FeeValue : 0;
-            // ----------------------------------------
+            decimal fee = applicableRule?.FeeValue ?? 0m;
 
-            // 9. Return to Controller
-            return responseDto;
+            // Receiver amount = (sendAmount - fee) * offeredRate
+            decimal netSendAmount = Math.Max(request.SendAmount - fee, 0m);
+            decimal receiverAmount = Math.Round(netSendAmount * offeredRate, 4);
+
+            var newQuote = new FXQuote
+            {
+                FromCurrency = fromCcy,
+                ToCurrency = toCcy,
+                SendAmount = request.SendAmount,
+                ReceiverAmount = receiverAmount,
+                MidRate = midRate,
+                MarginBps = marginBps,
+                OfferedRate = offeredRate,
+                Fee = fee,
+                QuoteTime = DateTime.UtcNow,
+                ValidUntil = DateTime.UtcNow.AddMinutes(15),
+                Status = FXQuoteStatus.Active
+            };
+
+            var savedQuote = await _repo.AddQuoteAsync(newQuote);
+
+            return new FXQuoteResponseDto
+            {
+                QuoteId = savedQuote.QuoteID,
+                FromCurrency = savedQuote.FromCurrency,
+                ToCurrency = savedQuote.ToCurrency,
+                SendAmount = savedQuote.SendAmount,
+                ReceiverAmount = savedQuote.ReceiverAmount,
+                MidRate = savedQuote.MidRate,
+                MarginBps = savedQuote.MarginBps,
+                OfferedRate = savedQuote.OfferedRate,
+                Fee = savedQuote.Fee,
+                ValidUntil = savedQuote.ValidUntil
+            };
         }
 
         public async Task<FXQuoteResponseDto> GetQuoteAsync(string quoteId)
         {
             var quote = await _repo.GetQuoteByIdAsync(quoteId);
-            if (quote == null) return null; 
+            if (quote == null) return null;
 
-            var responseDto = _mapper.Map<FXQuoteResponseDto>(quote);
-            
-            string corridor = $"{quote.FromCurrency.ToUpper()}-{quote.ToCurrency.ToUpper()}";
+            // Re-resolve the current fee in case rules changed since quote was created
+            string corridor = $"{quote.FromCurrency}-{quote.ToCurrency}";
             var allRules = await _feeRepo.GetAllActiveFeeRulesAsync();
-            
-            // Apply the same tie-breaker logic here
             var applicableRule = allRules
                 .Where(r => r.Corridor == corridor)
-                .OrderByDescending(r => r.CreatedDate) // Sort newest first
+                .OrderByDescending(r => r.CreatedDate)
                 .FirstOrDefault();
 
-            responseDto.FeeApplied = applicableRule != null ? applicableRule.FeeValue : 0;
-
-            return responseDto;
+            return new FXQuoteResponseDto
+            {
+                QuoteId = quote.QuoteID,
+                FromCurrency = quote.FromCurrency,
+                ToCurrency = quote.ToCurrency,
+                SendAmount = quote.SendAmount,
+                ReceiverAmount = quote.ReceiverAmount,
+                MidRate = quote.MidRate,
+                MarginBps = quote.MarginBps,
+                OfferedRate = quote.OfferedRate,
+                Fee = applicableRule?.FeeValue ?? quote.Fee,
+                ValidUntil = quote.ValidUntil
+            };
         }
 
-        // --- Private Helper Method ---
+        public async Task<IEnumerable<FXQuoteResponseDto>> GetAllQuotesAsync()
+        {
+            var all = await _repo.GetAllQuotesAsync();
+            return all.Select(q => new FXQuoteResponseDto
+            {
+                QuoteId      = q.QuoteID,
+                FromCurrency = q.FromCurrency,
+                ToCurrency   = q.ToCurrency,
+                SendAmount   = q.SendAmount,
+                ReceiverAmount = q.ReceiverAmount,
+                MidRate      = q.MidRate,
+                MarginBps    = q.MarginBps,
+                OfferedRate  = q.OfferedRate,
+                Fee          = q.Fee,
+                ValidUntil   = q.ValidUntil,
+            });
+        }
+
         private decimal GetMockMarketRate(string corridor)
         {
             return corridor switch
             {
-                // Major Inward Corridors (To INR)
+                // Inward corridors (foreign → INR)
                 "USD-INR" => 83.5025m,
                 "GBP-INR" => 105.7510m,
                 "EUR-INR" => 90.2050m,
                 "CAD-INR" => 61.3040m,
                 "AED-INR" => 22.7350m,
-                "AUD-INR" => 54.8020m,  // Australian Dollar
-                "SGD-INR" => 62.1550m,  // Singapore Dollar
-                "SAR-INR" => 22.2510m,  // Saudi Riyal
-                "JPY-INR" => 0.5520m,   // Japanese Yen
-                "CHF-INR" => 93.4010m,  // Swiss Franc
-                "NZD-INR" => 50.1200m,  // New Zealand Dollar
+                "AUD-INR" => 54.8020m,
+                "SGD-INR" => 62.1550m,
+                "SAR-INR" => 22.2510m,
+                "JPY-INR" => 0.5520m,
+                "CHF-INR" => 93.4010m,
+                "NZD-INR" => 50.1200m,
+                "MYR-INR" => 18.9500m,
+                "HKD-INR" => 10.6800m,
 
-                // Major Global Corridors
+                // Outward corridors (INR → foreign) — inverse of inward rates
+                "INR-USD" => Math.Round(1m / 83.5025m, 6),
+                "INR-GBP" => Math.Round(1m / 105.7510m, 6),
+                "INR-EUR" => Math.Round(1m / 90.2050m, 6),
+                "INR-CAD" => Math.Round(1m / 61.3040m, 6),
+                "INR-AED" => Math.Round(1m / 22.7350m, 6),
+                "INR-AUD" => Math.Round(1m / 54.8020m, 6),
+                "INR-SGD" => Math.Round(1m / 62.1550m, 6),
+                "INR-SAR" => Math.Round(1m / 22.2510m, 6),
+                "INR-JPY" => Math.Round(1m / 0.5520m, 6),
+                "INR-CHF" => Math.Round(1m / 93.4010m, 6),
+                "INR-NZD" => Math.Round(1m / 50.1200m, 6),
+                "INR-MYR" => Math.Round(1m / 18.9500m, 6),
+                "INR-HKD" => Math.Round(1m / 10.6800m, 6),
+
+                // Major cross-currency corridors
                 "EUR-USD" => 1.0820m,
                 "GBP-USD" => 1.2650m,
+                "USD-EUR" => Math.Round(1m / 1.0820m, 6),
+                "USD-GBP" => Math.Round(1m / 1.2650m, 6),
                 "USD-JPY" => 151.2000m,
                 "USD-CAD" => 1.3580m,
                 "AUD-USD" => 0.6550m,
+                "USD-AUD" => Math.Round(1m / 0.6550m, 6),
+                "USD-SGD" => 1.3450m,
+                "USD-AED" => 3.6725m,
+                "USD-SAR" => 3.7500m,
+                "USD-HKD" => 7.8200m,
+                "USD-CHF" => Math.Round(1m / 93.4010m * 83.5025m, 6),
+                "GBP-EUR" => Math.Round(1.2650m / 1.0820m, 6),
+                "EUR-GBP" => Math.Round(1.0820m / 1.2650m, 6),
 
-                _ => throw new Exception($"Unsupported currency corridor: {corridor}") 
+                _ => throw new NotSupportedException($"Currency corridor '{corridor}' is not supported.")
             };
         }
     }

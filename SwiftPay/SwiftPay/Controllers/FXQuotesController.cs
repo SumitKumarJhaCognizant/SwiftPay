@@ -41,8 +41,15 @@ namespace SwiftPay.Controllers
         {
             var response = await _service.GetQuoteAsync(id);
             if (response == null) return NotFound($"Quote with ID {id} not found.");
-            
             return Ok(response);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Treasury,Ops")]
+        public async Task<IActionResult> GetAll()
+        {
+            var all = await _service.GetAllQuotesAsync();
+            return Ok(new { message = "FX quotes retrieved.", data = all });
         }
     }
 }

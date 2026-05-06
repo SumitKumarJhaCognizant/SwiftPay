@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SwiftPay.Constants.Enums;
 using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.DTOs.RefundRefDTO;
+using SwiftPay.DTOs.CancellationDTO;
 using SwiftPay.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 
 namespace SwiftPay.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Ops")]
     [Route("api/[controller]")]
     [ApiController]
     public class RefundRefController : ControllerBase
@@ -105,14 +107,16 @@ namespace SwiftPay.Controllers
         /// <summary>
         /// Update refund ref status
         /// </summary>
-        [Authorize(Roles = "Admin,Treasury")]
+        [Authorize(Roles = "Admin,Ops,Treasury")]
         [HttpPatch("{id}/status")]
         [ProducesResponseType(typeof(RefundRef), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.RefundStatus status)
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] UpdateStatusBodyDto dto)
         {
+            if (!Enum.TryParse<RefundStatus>(dto?.Status, ignoreCase: true, out var status))
+                return BadRequest(new { message = $"Invalid status: '{dto?.Status}'. Valid: Initiated, Completed, Failed." });
             try
             {
                 var updated = await _service.UpdateStatusAsync(id, status);

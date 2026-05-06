@@ -9,7 +9,7 @@ namespace SwiftPay.Domain.Remittance.Entities
         public string RemitId { get; set; }
         public string PartnerCode { get; set; }
         public string PayloadJson { get; set; }
-        public string AckRef { get; set; }
+        public string? AckRef { get; set; }
          public PayOutInstructionStatus PartnerStatus { get; set; }// Sent, Ack, Rejected, Settled
          public DateTimeOffset SentDate { get; set; }
          public DateTimeOffset CreatedDate { get; set; }

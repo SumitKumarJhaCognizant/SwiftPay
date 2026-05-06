@@ -11,7 +11,7 @@ namespace SwiftPay.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Ops,Compliance")]
     public class AuditLogsController : ControllerBase
     {
         private readonly IAuditLogService _service;

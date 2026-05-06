@@ -1,0 +1,50 @@
+Using launch settings from C:\Project\Api\SwiftPay\SwiftPay\Properties\launchSettings.json...
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'User' has a global query filter defined and is the required end of a relationship with the entity 'Amendment'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'User' has a global query filter defined and is the required end of a relationship with the entity 'KYCRecord'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
+      Entity 'Beneficiary' has a global query filter defined and is the required end of a relationship with the entity 'RemittanceRequest'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (52ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [r].[RoleId], [r].[CreatedAt], [r].[IsDeleted], [r].[RoleType], [r].[UpdatedAt], [u0].[UserRoleId], [u0].[CreatedAt], [u0].[IsActive], [u0].[IsDeleted], [u0].[RoleId], [u0].[UpdatedAt], [u0].[UserId]
+      FROM [Role] AS [r]
+      LEFT JOIN (
+          SELECT [u].[UserRoleId], [u].[CreatedAt], [u].[IsActive], [u].[IsDeleted], [u].[RoleId], [u].[UpdatedAt], [u].[UserId]
+          FROM [UserRole] AS [u]
+          WHERE [u].[IsDeleted] = CAST(0 AS bit)
+      ) AS [u0] ON [r].[RoleId] = [u0].[RoleId]
+      WHERE [r].[IsDeleted] = CAST(0 AS bit)
+      ORDER BY [r].[RoleId]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (38ms) [Parameters=[@email='?' (Size = 255)], CommandType='Text', CommandTimeout='30']
+      SELECT [u1].[UserId], [u1].[CreatedAt], [u1].[Email], [u1].[IsDeleted], [u1].[Name], [u1].[PasswordHash], [u1].[Phone], [u1].[Status], [u1].[UpdatedAt], [u2].[UserRoleId], [u2].[CreatedAt], [u2].[IsActive], [u2].[IsDeleted], [u2].[RoleId], [u2].[UpdatedAt], [u2].[UserId]
+      FROM (
+          SELECT TOP(1) [u].[UserId], [u].[CreatedAt], [u].[Email], [u].[IsDeleted], [u].[Name], [u].[PasswordHash], [u].[Phone], [u].[Status], [u].[UpdatedAt]
+          FROM [User] AS [u]
+          WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @email AND [u].[IsDeleted] = CAST(0 AS bit)
+      ) AS [u1]
+      LEFT JOIN (
+          SELECT [u0].[UserRoleId], [u0].[CreatedAt], [u0].[IsActive], [u0].[IsDeleted], [u0].[RoleId], [u0].[UpdatedAt], [u0].[UserId]
+          FROM [UserRole] AS [u0]
+          WHERE [u0].[IsDeleted] = CAST(0 AS bit)
+      ) AS [u2] ON [u1].[UserId] = [u2].[UserId]
+      ORDER BY [u1].[UserId]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@roleId='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT [u].[UserRoleId], [u].[CreatedAt], [u].[IsActive], [u].[IsDeleted], [u].[RoleId], [u].[UpdatedAt], [u].[UserId], [u1].[UserId], [u1].[CreatedAt], [u1].[Email], [u1].[IsDeleted], [u1].[Name], [u1].[PasswordHash], [u1].[Phone], [u1].[Status], [u1].[UpdatedAt]
+      FROM [UserRole] AS [u]
+      INNER JOIN (
+          SELECT [u0].[UserId], [u0].[CreatedAt], [u0].[Email], [u0].[IsDeleted], [u0].[Name], [u0].[PasswordHash], [u0].[Phone], [u0].[Status], [u0].[UpdatedAt]
+          FROM [User] AS [u0]
+          WHERE [u0].[IsDeleted] = CAST(0 AS bit)
+      ) AS [u1] ON [u].[UserId] = [u1].[UserId]
+      WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[RoleId] = @roleId AND [u].[IsDeleted] = CAST(0 AS bit)
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5000
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Project\Api\SwiftPay\SwiftPay

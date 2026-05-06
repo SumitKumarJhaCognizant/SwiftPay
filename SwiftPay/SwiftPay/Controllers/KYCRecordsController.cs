@@ -134,7 +134,7 @@ namespace SwiftPay.Controllers
                     return Forbid();
                 }
 
-                var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Compliance");
+                var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Compliance") || User.IsInRole("Agent");
                 if (!isPrivileged && userId != currentUserId)
                 {
                     return Forbid();

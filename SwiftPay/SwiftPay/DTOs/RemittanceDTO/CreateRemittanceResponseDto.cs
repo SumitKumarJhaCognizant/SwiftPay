@@ -1,27 +1,31 @@
-﻿using System;
+using System;
 
 namespace SwiftPay.DTOs.RemittanceDTO
 {
     public class CreateRemittanceResponseDto
     {
-        // RemitId stored as integer in the domain model
         public int RemitId { get; set; }
-        public int CustomerId { get; set; } // Added property
-        public decimal Amount { get; set; } // Added property
+        public int CustomerId { get; set; }
+        public int BeneficiaryId { get; set; }
 
-        public int BeneficiaryId { get; set; } // Added property
-		public string Status { get; set; } = default!;
-
-        public string FromCurrency { get; set; } = default!;
-        public string ToCurrency { get; set; } = default!;
-
+        // Currency + amounts
+        public string FromCurrency { get; set; } = string.Empty;
+        public string ToCurrency { get; set; } = string.Empty;
+        public decimal SendAmount { get; set; }          // primary field (was "Amount")
+        public decimal Amount { get; set; }              // alias so old consumers still work
         public decimal? ReceiverAmount { get; set; }
-
         public decimal? RateApplied { get; set; }
         public decimal? FeeApplied { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        // Quote linkage
+        public string? QuoteId { get; set; }
 
-        public bool IsDeleted { get; set; } // Added property
+        // Compliance / reporting fields
+        public string? PurposeCode { get; set; }
+        public string? SourceOfFunds { get; set; }
+
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedDate { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

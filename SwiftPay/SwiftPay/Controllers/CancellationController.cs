@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using SwiftPay.Constants.Enums;
 using SwiftPay.Services.Interfaces;
 using SwiftPay.DTOs.CancellationDTO;
 using SwiftPay.Domain.Remittance.Entities;
@@ -9,8 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace SwiftPay.Controllers
 {
-    [Authorize(Roles ="Admin")]
-
+    // Customers can request a cancellation; Ops/Admin process it.
+    [Authorize(Roles = "Admin,Ops,Customer")]
     [Route("api/[controller]")]
     [ApiController]
     public class CancellationController : ControllerBase
@@ -110,8 +111,10 @@ namespace SwiftPay.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.CancellationStatus status)
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] UpdateStatusBodyDto dto)
         {
+            if (!Enum.TryParse<CancellationStatus>(dto?.Status, ignoreCase: true, out var status))
+                return BadRequest(new { message = $"Invalid status: '{dto?.Status}'. Valid: Requested, Approved, Rejected, Posted." });
             try
             {
                 var updated = await _service.UpdateStatusAsync(id, status);

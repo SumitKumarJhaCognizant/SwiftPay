@@ -56,7 +56,7 @@ namespace SwiftPay.Services
 			var remitIds = settledInstructions.Select(i => i.RemitId.Trim()).ToList();
 
 			var matchingRemits = await _context.RemittanceRequests
-				.Where(r => remitIds.Contains(r.RemitId.Trim())
+				.Where(r => remitIds.Contains((r.RemitId).ToString().Trim())
 						 && r.FromCurrency.Trim() == fromCurr
 						 && r.ToCurrency.Trim() == toCurr)
 				.ToListAsync();
@@ -64,7 +64,7 @@ namespace SwiftPay.Services
 			var joinedData = settledInstructions
 				.Join(matchingRemits,
 					  inst => inst.RemitId.Trim(),
-					  remit => remit.RemitId.Trim(),
+					  remit => remit.RemitId.ToString().Trim(),
 					  (inst, remit) => new { Instruction = inst, Remit = remit })
 				.ToList();
 
@@ -147,10 +147,14 @@ namespace SwiftPay.Services
 			RemittanceRequest remit = null;
 			PayoutInstruction inst = null;
 
-			// Fetch the linked records based on the ID provided
+			// Fetch the linked records based on the ID provided.
+			// RemittanceRequest.RemitId is an int — coerce the string referenceId.
 			if (type == ReferenceType.Remit)
 			{
-				remit = await _context.RemittanceRequests.FindAsync(referenceId)
+				if (!int.TryParse(referenceId, out var remitIntId))
+					throw new KeyNotFoundException($"Invalid remittance id '{referenceId}'.");
+
+				remit = await _context.RemittanceRequests.FindAsync(remitIntId)
 					?? throw new KeyNotFoundException($"Remittance {referenceId} not found.");
 
 				inst = await _context.PayoutInstructions.FirstOrDefaultAsync(p => p.RemitId == referenceId);
@@ -160,7 +164,10 @@ namespace SwiftPay.Services
 				inst = await _context.PayoutInstructions.FindAsync(referenceId)
 					?? throw new KeyNotFoundException($"Instruction {referenceId} not found.");
 
-				remit = await _context.RemittanceRequests.FindAsync(inst.RemitId)
+				if (!int.TryParse(inst.RemitId, out var linkedRemitId))
+					throw new KeyNotFoundException($"Instruction {referenceId} has invalid remit reference.");
+
+				remit = await _context.RemittanceRequests.FindAsync(linkedRemitId)
 					?? throw new KeyNotFoundException($"Linked remittance not found.");
 			}
 			else

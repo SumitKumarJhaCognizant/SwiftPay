@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using SwiftPay.DTOs.FXQuoteDTO;
 
@@ -7,5 +8,6 @@ namespace SwiftPay.Services.Interfaces
     {
         Task<FXQuoteResponseDto> GenerateQuoteAsync(CreateQuoteRequestDto request);
         Task<FXQuoteResponseDto> GetQuoteAsync(string quoteId);
+        Task<IEnumerable<FXQuoteResponseDto>> GetAllQuotesAsync();
     }
 }

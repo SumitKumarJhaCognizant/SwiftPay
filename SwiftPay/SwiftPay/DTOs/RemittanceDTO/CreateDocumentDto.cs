@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SwiftPay.Constants.Enums;
 
 namespace SwiftPay.DTOs.RemittanceDTO
 {
@@ -8,10 +9,9 @@ namespace SwiftPay.DTOs.RemittanceDTO
         public int RemitId { get; set; }
 
         [Required]
-        public int DocType { get; set; }
+        public DocumentType DocType { get; set; }
 
-        
         [StringLength(2048)]
-        public string? FileURI { get; set; } 
+        public string? FileURI { get; set; }
     }
 }

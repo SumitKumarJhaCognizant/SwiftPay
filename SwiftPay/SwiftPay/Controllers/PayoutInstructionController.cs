@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SwiftPay.Constants.Enums;
 using SwiftPay.DTOs.PayoutDTO;
 using SwiftPay.Services.Interfaces;
@@ -7,6 +8,7 @@ namespace SwiftPay.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Ops,Admin")]
     public class PayoutInstructionController : ControllerBase
     {
         private readonly IPayoutInstructionService _service;

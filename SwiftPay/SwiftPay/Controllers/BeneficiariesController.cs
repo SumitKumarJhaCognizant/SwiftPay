@@ -116,15 +116,13 @@ namespace SwiftPay.Controllers
                 if (!int.TryParse(userIdClaim, out var currentUserId))
                     return Forbid();
 
-                // If not Admin/Ops, verify that the beneficiary belongs to a customer owned by this user
-                if (!User.IsInRole("Admin") && !User.IsInRole("Ops"))
+                // Privileged staff (Admin, Agent, Ops, Compliance) can read any beneficiary.
+                var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Agent")
+                                   || User.IsInRole("Ops") || User.IsInRole("Compliance");
+                if (!isPrivileged)
                 {
-                    // beneficiary.CustomerID refers to the customer; we need to ensure currentUserId owns that customer
-                    // Assume customers are linked to a UserID; use service to fetch customer ownership via beneficiary details if needed
-                    // Here we rely on beneficiary.CustomerID and call into service to validate ownership
                     var customer = await _customerService.GetByIdAsync(beneficiary.CustomerID);
-                    if (customer == null) return Forbid();
-                    if (customer.UserID != currentUserId) return Forbid();
+                    if (customer == null || customer.UserID != currentUserId) return Forbid();
                 }
 
                 return Ok(new { message = "Beneficiary retrieved successfully.", data = beneficiary });
@@ -156,7 +154,7 @@ namespace SwiftPay.Controllers
                 if (!int.TryParse(userIdClaim, out var currentUserId))
                     return Forbid();
 
-                if (!User.IsInRole("Admin") && !User.IsInRole("Ops"))
+                if (!User.IsInRole("Admin") && !User.IsInRole("Ops") && !User.IsInRole("Agent"))
                 {
                     var customer = await _customerService.GetByIdAsync(customerId);
                     if (customer == null) return NotFound(new { message = $"Customer with ID {customerId} not found." });

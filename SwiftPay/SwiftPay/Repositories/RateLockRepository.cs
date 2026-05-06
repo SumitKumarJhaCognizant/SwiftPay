@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SwiftPay.Configuration;
 using SwiftPay.FXModule.Api.Models;
@@ -25,6 +27,14 @@ namespace SwiftPay.Repositories
         {
             return await _context.RateLocks
                 .FirstOrDefaultAsync(r => r.LockID == lockId && !r.IsDeleted);
+        }
+
+        public async Task<IEnumerable<RateLock>> GetAllRateLocksAsync()
+        {
+            return await _context.RateLocks
+                .Where(r => !r.IsDeleted)
+                .OrderByDescending(r => r.LockStart)
+                .ToListAsync();
         }
     }
 }

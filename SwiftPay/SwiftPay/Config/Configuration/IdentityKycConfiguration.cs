@@ -11,8 +11,6 @@ namespace SwiftPay.Config.Configuration
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.ToTable("[User]");
-
             builder.HasKey(u => u.UserId);
             builder.Property(u => u.UserId).ValueGeneratedOnAdd();
 
@@ -153,6 +151,53 @@ namespace SwiftPay.Config.Configuration
 
             // Global query filter to hide soft-deleted user-role assignments
             builder.HasQueryFilter(ur => !ur.IsDeleted);
+        }
+    }
+
+    // KYC Document Configuration
+    public class KYCDocumentConfiguration : IEntityTypeConfiguration<SwiftPay.Models.KYCDocument>
+    {
+        public void Configure(EntityTypeBuilder<SwiftPay.Models.KYCDocument> builder)
+        {
+            builder.HasKey(d => d.KYCDocumentId);
+            builder.Property(d => d.KYCDocumentId).ValueGeneratedOnAdd();
+
+            builder.Property(d => d.KYCID).IsRequired();
+
+            builder.Property(d => d.DocType)
+                .HasConversion<string>()
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(d => d.FileURI)
+                .IsRequired()
+                .HasMaxLength(2048);
+
+            builder.Property(d => d.UploadedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            builder.Property(d => d.VerificationStatus)
+                .HasConversion<string>()
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasDefaultValue(KycVerificationStatus.Pending);
+
+            builder.Property(d => d.Notes).HasColumnType("text").IsRequired(false);
+
+            builder.Property(d => d.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            builder.Property(d => d.UpdatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            builder.Property(d => d.IsDeleted).IsRequired().HasDefaultValue(false);
+            builder.HasQueryFilter(d => !d.IsDeleted);
+
+            builder.HasOne(d => d.KYC)
+                .WithMany()
+                .HasForeignKey(d => d.KYCID)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

@@ -20,9 +20,9 @@ namespace SwiftPay.Domain.Remittance.Entities
 		public int CustomerId { get; set; }
 		public virtual CustomerProfile Customer { get; set; } // Add this!
 
-		// 2. Beneficiary Relationship
+		// 2. Beneficiary Relationship (navigation optional to play nicely with Beneficiary's soft-delete query filter)
 		public int BeneficiaryId { get; set; }
-		public virtual Beneficiary Beneficiary { get; set; } // Add this!
+		public virtual Beneficiary? Beneficiary { get; set; }
 
 		// 3. FXQuote Relationship
 		public string? QuoteId { get; set; }

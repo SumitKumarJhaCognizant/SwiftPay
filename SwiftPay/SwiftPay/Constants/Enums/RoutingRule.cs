@@ -8,10 +8,10 @@
         Suspended = 2
     }
 
-    // Since RoutingRule also needs PayoutMode
+    // Since RoutingRule also needs PayoutMode (matches spec: Account/CashPickup/MobileWallet)
     public enum PayoutModeStatus
     {
-        BankTransfer = 1,
+        Account = 1,
         CashPickup = 2,
         MobileWallet = 3
     }

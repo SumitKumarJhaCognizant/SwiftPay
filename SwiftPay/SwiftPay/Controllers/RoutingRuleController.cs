@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SwiftPay.DTOs.RoutingDTO;
 using SwiftPay.Services.Interfaces;
 
@@ -6,6 +7,7 @@ namespace SwiftPay.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Treasury,Admin")]
     public class RoutingRuleController : ControllerBase
     {
         private readonly IRoutingRuleService _service;

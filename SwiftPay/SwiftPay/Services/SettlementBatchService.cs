@@ -48,7 +48,7 @@ namespace SwiftPay.Services
 			var remitIds = settledInstructions.Select(i => i.RemitId.Trim()).ToList();
 
 			var matchingRemits = await _context.RemittanceRequests
-				.Where(r => remitIds.Contains(r.RemitId.Trim())
+				.Where(r => remitIds.Contains(r.RemitId.ToString().Trim())
 						 && r.FromCurrency.Trim() == fromCurr
 						 && r.ToCurrency.Trim() == toCurr)
 				.ToListAsync();
@@ -57,7 +57,7 @@ namespace SwiftPay.Services
 			var joinedData = settledInstructions
 				.Join(matchingRemits,
 					  inst => inst.RemitId.Trim(),
-					  remit => remit.RemitId.Trim(),
+					  remit => remit.RemitId.ToString().Trim(),
 					  (inst, remit) => new { Instruction = inst, Remit = remit })
 				.ToList();
 

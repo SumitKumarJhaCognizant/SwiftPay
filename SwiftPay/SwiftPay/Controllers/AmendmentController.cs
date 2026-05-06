@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SwiftPay.Constants.Enums;
 using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.DTOs.AmendmentDTO;
 using SwiftPay.Services.Interfaces;
@@ -9,7 +10,8 @@ using System.Collections.Generic;
 
 namespace SwiftPay.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    // Customers can request an amendment for their own remit; Ops / Admin process it.
+    [Authorize(Roles = "Admin,Ops,Customer")]
     [Route("api/[controller]")]
     [ApiController]
     public class AmendmentController : ControllerBase
@@ -26,14 +28,16 @@ namespace SwiftPay.Controllers
         /// </summary>
         /// <param name="id">Amendment ID</param>
         /// <param name="dto">Verifier and status</param>
-        [Authorize(Roles = "Admin,Compliance")]
+        [Authorize(Roles = "Admin,Ops,Compliance")]
         [HttpPatch("{id}/status")]
         [ProducesResponseType(typeof(Amendment), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchStatus(int id, [FromBody] Constants.Enums.AmendmentStatus status)
+        public async Task<IActionResult> PatchStatus(int id, [FromBody] UpdateAmendmentStatusDto dto)
         {
+            if (!Enum.TryParse<AmendmentStatus>(dto?.Status, ignoreCase: true, out var status))
+                return BadRequest(new { message = $"Invalid status value: '{dto?.Status}'. Valid: Pending, Approved, Rejected." });
             try
             {
                 var updated = await _amendmentService.UpdateStatusAsync(id, status);

@@ -20,39 +20,51 @@ namespace SwiftPay.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Customer")] // 2. CREATE: Strictly Customers only
+        [Authorize(Roles = "Customer,Agent,Admin")] // Customers self-serve; Agent/Admin act on behalf of customers.
         public async Task<IActionResult> CreateRateLock([FromBody] CreateRateLockRequestDto request)
         {
-            var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(customerId))
+            var callerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(callerUserId))
             {
                 return Unauthorized("Invalid or missing user identity in token.");
             }
 
-            request.CustomerID = customerId;
+            // Customers can only lock for themselves; Agent/Admin may pass any CustomerID.
+            if (User.IsInRole("Customer"))
+            {
+                request.CustomerID = callerUserId;
+            }
+            else if (string.IsNullOrWhiteSpace(request.CustomerID))
+            {
+                request.CustomerID = callerUserId;  // fallback if not provided
+            }
 
             var response = await _service.LockRateAsync(request);
             return Ok(response);
         }
         
         [HttpGet("{id}")]
-        [Authorize(Roles = "Customer,Admin")] // 3. READ: Customers and Admins allowed
+        [Authorize(Roles = "Customer,Admin,Treasury,Ops")]
         public async Task<IActionResult> GetRateLock(string id)
         {
             var response = await _service.GetRateLockAsync(id);
             if (response == null) return NotFound($"Rate Lock with ID {id} not found.");
-            
-            // 4. PREVENT SNOOPING (With Admin Bypass)
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin"); // Check if the token has the Admin badge
 
-            // If they are NOT an admin, AND the IDs don't match, kick them out.
-            if (!isAdmin && response.CustomerID != currentUserId)
-            {
-                return Forbid(); 
-            }
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Treasury") || User.IsInRole("Ops");
+            if (!isPrivileged && response.CustomerID != currentUserId)
+                return Forbid();
 
             return Ok(response);
+        }
+
+        // Treasury / Admin can list all rate locks for oversight.
+        [HttpGet]
+        [Authorize(Roles = "Admin,Treasury,Ops")]
+        public async Task<IActionResult> GetAll()
+        {
+            var all = await _service.GetAllRateLocksAsync();
+            return Ok(new { message = "Rate locks retrieved.", data = all });
         }
     }
 }

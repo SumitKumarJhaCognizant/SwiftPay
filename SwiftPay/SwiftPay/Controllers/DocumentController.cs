@@ -24,14 +24,15 @@ namespace SwiftPay.Controllers
 
 		[HttpPost]
 		[Authorize(Roles = "Customer,Agent,Compliance,Admin")]
-		public async Task<IActionResult> Create([FromForm] IFormFile file, [FromForm] CreateDocumentDto dto)
+		public async Task<IActionResult> Create([FromBody] CreateDocumentDto dto)
 		{
 			try
 			{
-				if (file == null) return BadRequest(new { message = "File is required." });
+				if (dto == null) return BadRequest(new { message = "Body is required." });
+				if (string.IsNullOrWhiteSpace(dto.FileURI)) return BadRequest(new { message = "FileURI is required." });
 
-				var created = await _documentService.CreateFromFormAsync(file, dto);
-				return CreatedAtAction(nameof(GetById), new { id = created.DocumentId }, created);
+				var created = await _documentService.CreateAsync(dto);
+				return Ok(new { message = "Document created successfully.", data = created });
 			}
 			catch (Exception ex)
 			{
