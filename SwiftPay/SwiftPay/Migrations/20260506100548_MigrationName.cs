@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SwiftPay.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class MigrationName : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -96,6 +96,7 @@ namespace SwiftPay.Migrations
                 columns: table => new
                 {
                     QuoteID = table.Column<string>(type: "nvarchar(450)", nullable: false, defaultValueSql: "NEWID()"),
+                    CustomerID = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FromCurrency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     ToCurrency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     SendAmount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
@@ -124,7 +125,7 @@ namespace SwiftPay.Migrations
                     RemitId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     PartnerCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     PayloadJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AckRef = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    AckRef = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
                     PartnerStatus = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false, defaultValue: "Sent"),
                     SentDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     CreatedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
@@ -417,6 +418,33 @@ namespace SwiftPay.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "KYCDocuments",
+                columns: table => new
+                {
+                    KYCDocumentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    KYCID = table.Column<int>(type: "int", nullable: false),
+                    DocType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    FileURI = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: false),
+                    UploadedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    VerificationStatus = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
+                    Notes = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_KYCDocuments", x => x.KYCDocumentId);
+                    table.ForeignKey(
+                        name: "FK_KYCDocuments_KYCRecords_KYCID",
+                        column: x => x.KYCID,
+                        principalTable: "KYCRecords",
+                        principalColumn: "KYCID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RemittanceRequests",
                 columns: table => new
                 {
@@ -648,6 +676,11 @@ namespace SwiftPay.Migrations
                 filter: "[IsDeleted] = 0");
 
             migrationBuilder.CreateIndex(
+                name: "IX_KYCDocuments_KYCID",
+                table: "KYCDocuments",
+                column: "KYCID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_KYCRecords_UserID",
                 table: "KYCRecords",
                 column: "UserID");
@@ -736,7 +769,7 @@ namespace SwiftPay.Migrations
                 name: "FeeRule");
 
             migrationBuilder.DropTable(
-                name: "KYCRecords");
+                name: "KYCDocuments");
 
             migrationBuilder.DropTable(
                 name: "NotificationAlerts");
@@ -770,6 +803,9 @@ namespace SwiftPay.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRole");
+
+            migrationBuilder.DropTable(
+                name: "KYCRecords");
 
             migrationBuilder.DropTable(
                 name: "RemittanceRequests");

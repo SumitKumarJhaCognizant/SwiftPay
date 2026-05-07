@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260504111445_AckRefNullable")]
-    partial class AckRefNullable
+    [Migration("20260506100548_MigrationName")]
+    partial class MigrationName
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -880,6 +880,10 @@ namespace SwiftPay.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<string>("CustomerID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Fee")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
@@ -1105,6 +1109,64 @@ namespace SwiftPay.Migrations
                     b.HasIndex("RemitId");
 
                     b.ToTable("RemittanceDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("SwiftPay.Models.KYCDocument", b =>
+                {
+                    b.Property<int>("KYCDocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KYCDocumentId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("DocType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FileURI")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("KYCID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("VerificationStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Pending");
+
+                    b.HasKey("KYCDocumentId");
+
+                    b.HasIndex("KYCID");
+
+                    b.ToTable("KYCDocuments");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.ReconciliationRecord", b =>
@@ -1528,6 +1590,17 @@ namespace SwiftPay.Migrations
                         .IsRequired();
 
                     b.Navigation("RemittanceRequest");
+                });
+
+            modelBuilder.Entity("SwiftPay.Models.KYCDocument", b =>
+                {
+                    b.HasOne("SwiftPay.Domain.Remittance.Entities.KYCRecord", "KYC")
+                        .WithMany()
+                        .HasForeignKey("KYCID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("KYC");
                 });
 
             modelBuilder.Entity("SwiftPay.Models.RemitValidation", b =>

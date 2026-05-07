@@ -6,6 +6,7 @@ namespace SwiftPay.DTOs.FXQuoteDTO
     {
         public string FromCurrency { get; set; }
         public string ToCurrency { get; set; }
+        public decimal SendAmount { get; set; }
         
         // --- ADDED: Hidden property to securely carry the ID to the service ---
         [JsonIgnore]
