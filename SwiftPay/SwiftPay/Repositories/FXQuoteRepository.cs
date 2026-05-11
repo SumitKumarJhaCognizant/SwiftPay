@@ -29,21 +29,16 @@ namespace SwiftPay.Repositories
             return await _context.FXQuotes.FirstOrDefaultAsync(q => q.QuoteID == quoteId && !q.IsDeleted);
         }
 
-        // --- FIXED: Added the implementation to fetch all active quotes ---
-        public async Task<IEnumerable<FXQuote>> GetAllQuotesAsync()
-        {
-            return await _context.FXQuotes
-                .Where(q => !q.IsDeleted)
-                .ToListAsync();
-        }
-
-        // --- The implementation to save the updated status to SQL Server ---
         public async Task<FXQuote> UpdateQuoteAsync(FXQuote quote)
         {
             _context.FXQuotes.Update(quote);
             await _context.SaveChangesAsync();
             return quote;
         }
-        // --------------------------------------------------------------------------
+
+        public async Task<IEnumerable<FXQuote>> GetAllQuotesAsync()
+        {
+            return await _context.FXQuotes.Where(q => !q.IsDeleted).ToListAsync();
+        }
     }
 }
