@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SwiftPay.Migrations
 {
     /// <inheritdoc />
-    public partial class MigrationName : Migration
+    public partial class Updated : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -583,7 +583,7 @@ namespace SwiftPay.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RemitId = table.Column<int>(type: "int", maxLength: 64, nullable: false),
                     DocType = table.Column<int>(type: "int", maxLength: 50, nullable: false),
-                    FileURI = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: false),
+                    FileURI = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UploadedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     VerificationStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),

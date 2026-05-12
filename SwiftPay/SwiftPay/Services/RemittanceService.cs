@@ -5,6 +5,7 @@ using AutoMapper;
 using SwiftPay.Constants.Enums;
 using SwiftPay.Domain.Remittance.Entities;
 using SwiftPay.DTOs.RemittanceDTO;
+using SwiftPay.DTOs.UserCustomerDTO;
 using SwiftPay.Models;
 using SwiftPay.Repositories.Interfaces;
 using SwiftPay.Services.Interfaces;
@@ -21,13 +22,23 @@ namespace SwiftPay.Services
 		private readonly IRemitValidationRepository _validationRepo;
 		private readonly IMapper _mapper;
 		private readonly IFXQuoteRepository _quoteRepo;
+		private readonly ICustomerRepository _customerRepo;
+		private readonly INotificationAlertService _notificationService;
 
-		public RemittanceService(IRemittanceRepository repo, IRemitValidationRepository validationRepo, IMapper mapper, IFXQuoteRepository quoteRepo)
+		public RemittanceService(
+			IRemittanceRepository repo,
+			IRemitValidationRepository validationRepo,
+			IMapper mapper,
+			IFXQuoteRepository quoteRepo,
+			ICustomerRepository customerRepo,
+			INotificationAlertService notificationService)
 		{
 			_repo = repo;
 			_validationRepo = validationRepo;
 			_mapper = mapper;
 			_quoteRepo = quoteRepo;
+			_customerRepo = customerRepo;
+			_notificationService = notificationService;
 		}
 
 		public async Task<List<CreateRemittanceResponseDto>> GetByCustomerRemittancesAsync(int customerId, int page, int limit, string? status = null)
@@ -48,6 +59,10 @@ namespace SwiftPay.Services
 			remittance.Status = RemittanceRequestStatus.Cancelled;
 			remittance.UpdateDate = DateTime.UtcNow;
 			await _repo.UpdateAsync(remittance);
+
+			await TryNotifyCustomerAsync(remittance.CustomerId, remittance.RemitId,
+				NotificationCategory.Payout,
+				$"Your remittance #{remittance.RemitId} has been cancelled. Reason: {cancellationReason}");
 
 			// generate mock refund reference
 			var refundRef = $"REFUND-{Guid.NewGuid():N}";
@@ -126,6 +141,10 @@ namespace SwiftPay.Services
 				// This will help you see the REAL error in your logs
 				throw new Exception($"DB Save Error: {ex.InnerException?.Message ?? ex.Message}");
 			}
+
+			await TryNotifyCustomerAsync(remittance.CustomerId, remittance.RemitId,
+				NotificationCategory.Payout,
+				$"Your remittance #{remittance.RemitId} ({remittance.FromCurrency} {remittance.SendAmount:0.00} → {remittance.ToCurrency}) has been submitted successfully.");
 
 			return _mapper.Map<CreateRemittanceResponseDto>(remittance);
 		}
@@ -367,6 +386,24 @@ namespace SwiftPay.Services
 			return _mapper.Map<List<CreateRemittanceResponseDto>>(remittances);
 		}
 
+		private async Task TryNotifyCustomerAsync(int customerId, int remitId, NotificationCategory category, string message)
+		{
+			try
+			{
+				var customer = await _customerRepo.GetByIdAsync(customerId);
+				if (customer == null) return;
+
+				await _notificationService.CreateAsync(new CreateNotificationDto
+				{
+					UserID   = customer.UserID,
+					RemitID  = remitId,
+					Message  = message,
+					Category = category,
+				});
+			}
+			catch { /* notification failure must never block the main flow */ }
+		}
+
 		public async Task UpdateVerificationStatusByRemitIdAsync(int remitId, RemittanceRequestStatus status)
 		{
 			var remittance = await _repo.GetByIdAsync(remitId);
@@ -378,6 +415,20 @@ namespace SwiftPay.Services
 			remittance.UpdateDate = DateTime.UtcNow;
 
 			await _repo.UpdateAsync(remittance);
+
+			string? message = status switch
+			{
+				RemittanceRequestStatus.Validated       => $"Your remittance #{remitId} has been validated and is ready for processing.",
+				RemittanceRequestStatus.Queued          => $"Your remittance #{remitId} has been queued for payout.",
+				RemittanceRequestStatus.Paid            => $"Your remittance #{remitId} has been paid successfully. Funds have been sent to the beneficiary.",
+				RemittanceRequestStatus.Cancelled       => $"Your remittance #{remitId} has been cancelled.",
+				RemittanceRequestStatus.ComplianceHold  => $"Your remittance #{remitId} has been placed on compliance hold. Our team is reviewing your transaction.",
+				RemittanceRequestStatus.PendingCompliance => $"Your remittance #{remitId} has been sent for compliance review.",
+				_ => null
+			};
+
+			if (message != null)
+				await TryNotifyCustomerAsync(remittance.CustomerId, remitId, NotificationCategory.Payout, message);
 		}
 	}
 }

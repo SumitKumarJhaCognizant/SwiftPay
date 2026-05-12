@@ -12,8 +12,8 @@ using SwiftPay.Configuration;
 namespace SwiftPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260506100548_MigrationName")]
-    partial class MigrationName
+    [Migration("20260512035429_Updated")]
+    partial class Updated
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1075,8 +1075,7 @@ namespace SwiftPay.Migrations
 
                     b.Property<string>("FileURI")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()

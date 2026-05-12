@@ -9,7 +9,7 @@ namespace SwiftPay.DTOs.FXQuoteDTO
         public decimal SendAmount { get; set; }
         
         
-        public decimal SendAmount { get; set; }
+        
         
         // --- ADDED: Hidden property to securely carry the ID to the service ---
         [JsonIgnore]
