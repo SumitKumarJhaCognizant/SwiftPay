@@ -57,13 +57,14 @@ namespace SwiftPay.Repositories
 
 		/// <summary>
 		/// Retrieves a remittance request by its RemitId (string).
-		/// Includes related documents and validations.
+		/// Includes related documents, validations, and beneficiary.
 		/// </summary>
 		public async Task<RemittanceRequest?> GetByIdAsync(int remitId)
 		{
 			return await _db.Set<RemittanceRequest>()
 				.Include(r => r.Documents)
 				.Include(r => r.Validations)
+				.Include(r => r.Beneficiary)
 				.FirstOrDefaultAsync(r => r.RemitId == remitId && !r.IsDeleted);
 		}
 
@@ -99,10 +100,10 @@ namespace SwiftPay.Repositories
 		/// </summary>
 		public async Task<List<RemitValidation>> GetValidationsByRemitIdAsync(int remitId)
 		{
-				return await _db.Set<RemitValidation>()
-				.Where(v => v.RemitId == remitId)
-				.OrderBy(v => v.CheckedDate)
-				.ToListAsync();
+			return await _db.Set<RemitValidation>()
+			.Where(v => v.RemitId == remitId)
+			.OrderBy(v => v.CheckedDate)
+			.ToListAsync();
 		}
 
 		/// <summary>
@@ -110,7 +111,9 @@ namespace SwiftPay.Repositories
 		/// </summary>
 		public async Task<IEnumerable<RemittanceRequest>> GetAllAsync()
 		{
-			return await _db.Set<RemittanceRequest>().ToListAsync();
+			return await _db.Set<RemittanceRequest>()
+				.Include(r => r.Beneficiary)
+				.ToListAsync();
 		}
 	}
 }

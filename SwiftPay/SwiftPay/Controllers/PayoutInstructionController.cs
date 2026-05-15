@@ -46,6 +46,14 @@ namespace SwiftPay.Controllers
 			return success ? NoContent() : NotFound();
 		}
 
+		[HttpPatch("{id}/status")]
+		public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdatePayoutStatusDto dto)
+		{
+			var success = await _service.UpdateStatusAsync(id, dto.Status, dto.AckRef ?? string.Empty);
+			if (!success) return NotFound(new { message = "Payout instruction not found." });
+			return Ok(new { message = $"Status updated to {dto.Status}." });
+		}
+
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> Delete(string id)
 		{

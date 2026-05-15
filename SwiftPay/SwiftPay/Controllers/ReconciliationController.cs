@@ -35,7 +35,7 @@ namespace SwiftPay.Controllers
 		/// <param name="batchId">Identifier of the settlement batch to reconcile.</param>
 		/// <returns>HTTP 200 with reconciliation records on success; HTTP 404 or 400 on errors.</returns>
 		[HttpPost("batch/{batchId}")]
-		[Authorize(Roles = "Treasury, Admin")] 
+		[Authorize(Roles = "Treasury, Admin,Ops")] 
 		public async Task<ActionResult<IEnumerable<ReconciliationRecord>>> ReconcileBatch(int batchId)
 		{
 			try
@@ -66,7 +66,7 @@ namespace SwiftPay.Controllers
 		/// <param name="referenceId">The identifier of the reference to reconcile.</param>
 		/// <returns>HTTP 200 with the created reconciliation record; HTTP 404 or 400 on errors.</returns>
 		[HttpPost("auto/{type}/{referenceId}")]
-		[Authorize(Roles = "Treasury, Admin")] 
+		[Authorize(Roles = "Treasury, Admin, Ops")] 
 		public async Task<ActionResult<ReconciliationRecord>> AutoReconcile(ReferenceType type, string referenceId)
 		{
 			try
@@ -163,7 +163,7 @@ namespace SwiftPay.Controllers
 		/// <param name="dto">Payload describing the reconciliation record to create.</param>
 		/// <returns>HTTP 201 with the created reconciliation record.</returns>
 		[HttpPost]
-		[Authorize(Roles = "Treasury, Admin")] 
+		[Authorize(Roles = "Treasury, Admin,Ops")] 
 		public async Task<ActionResult<ReconciliationRecord>> Create([FromBody] CreateReconciliationDto dto)
 		{
 			try
@@ -185,7 +185,7 @@ namespace SwiftPay.Controllers
 		/// <param name="dto">Update payload containing new values.</param>
 		/// <returns>HTTP 200 with the updated reconciliation record; HTTP 404 if not found.</returns>
 		[HttpPut("{id}")]
-		[Authorize(Roles = "Treasury, Admin, Compliance")] 
+		[Authorize(Roles = "Treasury, Admin, Compliance,Ops")] 
 		public async Task<ActionResult<ReconciliationRecord>> Update(int id, [FromBody] UpdateReconciliationDto dto)
 		{
 			if (id != dto.ReconID) return BadRequest("ID mismatch between URL and payload.");
@@ -207,7 +207,7 @@ namespace SwiftPay.Controllers
 		/// <param name="id">The reconciliation record identifier.</param>
 		/// <returns>HTTP 204 on success; HTTP 404 if the record does not exist.</returns>
 		[HttpDelete("{id}")]
-		[Authorize(Roles = "Admin")] 
+		[Authorize(Roles = "Admin,Ops")] 
 		public async Task<IActionResult> DeleteReconciliationRecord([FromRoute] int id)
 		{
 			var success = await _service.DeleteAsync(id);
